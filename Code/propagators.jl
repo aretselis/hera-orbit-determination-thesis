@@ -22,7 +22,7 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
     counter = 1
 
     println("\nPropagating:")
-    iter = ProgressBar(t_start:step:t_end)
+    iter = ProgressBar(t_start:step:t_end-step)
     for i in iter
         # Calculate k1 values
         k1_x = fx(vx_0)
