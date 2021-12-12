@@ -9,11 +9,20 @@ function main()
     planets_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\de432s.bsp"
     didymos_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3_v01.bsp"
     dimorphos_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3_v01.bsp"
-    hera_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_sc_DCP3_v01.bsp"
+    hera_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_sc_PO_v01.bsp"
     furnsh(planets_kernel)
     furnsh(didymos_kernel)
     furnsh(dimorphos_kernel)
     furnsh(hera_kernel)
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP1_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3VCF_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_ECP_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP1_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3VCF_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_ECP_v01.bsp")
+
 
     # Define 1 et_minute
     et_start = utc2et("2027-04-25T09:47:00")
@@ -21,8 +30,8 @@ function main()
     et_minute = et_end-et_start
 
     # Orbit start and end time
-    start_time = utc2et("2027-04-25T08:14:58")
-    end_time = utc2et("2027-05-05T08:14:58")
+    start_time = utc2et("2027-02-25T15:59:58") 
+    end_time = utc2et("2027-03-21T08:14:58")
     step_size = 100*et_minute
     steps = convert(Int64, ceil((end_time-start_time)/step_size))
 
@@ -52,11 +61,12 @@ function main()
     x_dimorphos, y_dimorphos, z_dimorphos,= dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
     
     # Plot Hera Static img
-    pyplot()
-    plot3d(x_hera,y_hera,z_hera,title="Hera Trajectory", xlabel="x", ylabel="y", zlabel="z", label="Hera")
+    plotlyjs()
+    plot3d(x_hera,y_hera,z_hera,title="Hera Trajectory", xlabel="x [km]", ylabel="y [km]", zlabel="z [km]", label="Hera")
     plot3d!(x_didymos,y_didymos,z_didymos, label="Didymos")
     plot3d!(x_dimorphos, y_dimorphos, z_dimorphos, label="Dimorphos")
-
+    #savefig(".\\Results\\reference_case.png")
+    #=
     # Save image as .gif figure (warning, might take a lot of time)
     plt = scatter3d(1, title="Hera Trajectory", xaxis=("x",(-20,20)), yaxis=("y",(-20,20)), zaxis=("z",(-25,5)), markersize=1)
     anim = @animate for i in ProgressBar(1:1:length(x_hera))
@@ -65,7 +75,7 @@ function main()
         push!(plt, x_dimorphos[i], y_dimorphos[i], z_dimorphos[i])
     end
     gif(anim, "hera_orbit.gif", fps=15)
-
+    =#
 end
 
 main()
