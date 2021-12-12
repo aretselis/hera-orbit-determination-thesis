@@ -51,11 +51,6 @@ function main()
     furnsh(dimorphos_kernel)
     furnsh(hera_kernel)
 
-    # Define 1 et_second
-    et_start = utc2et("2027-04-25T09:47:00")
-    et_end = utc2et("2027-04-25T09:47:01")
-    et_second = et_end-et_start
-
     # Orbit start and end time
     spice_start_time = utc2et("2027-04-25T08:14:58")
     spice_end_time = spice_start_time + end_time
@@ -78,7 +73,8 @@ function main()
     x_hera, y_hera, z_hera = hera_coordinates[:, 1], hera_coordinates[:, 2], hera_coordinates[:, 3]
 
     # Plot Results
-    pyplot()
+    
+    plotlyjs()
     plot3d(x_dimorphos/1000,y_dimorphos/1000,z_dimorphos/1000,title="System Trajectories", xlabel="x [km]", ylabel="y [km]", zlabel="z [km]", label="Dimorphos")
     plot3d!(x_hera,y_hera,z_hera, xlabel="x [km]", ylabel="y [km]", zlabel="z [km]", label="Hera")
 end
