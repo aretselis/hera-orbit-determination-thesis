@@ -88,12 +88,10 @@ function main()
     barycenter_coordinates = zeros(Float64, number_of_steps + 1, 3)
     barycenter_offset = zeros(Float64, 3)
     barycenter_initial_coordinates = zeros(Float64, 3)
-    x_pixel_coordinates_didymos = zeros(Float64, number_of_steps + 1)
-    y_pixel_coordinates_didymos = zeros(Float64, number_of_steps + 1)
-    x_pixel_coordinates_dimorphos = zeros(Float64, number_of_steps + 1)
-    y_pixel_coordinates_dimorphos = zeros(Float64, number_of_steps + 1)
     camera_position_didymos = zeros(Float64, number_of_steps + 1, 3)
     camera_position_dimorphos = zeros(Float64, number_of_steps + 1, 3)
+    didymos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
 
     # HERA_AFC-1 coordinate system unit vectors
     e_x = [1.0, 0.0, 0.0]
@@ -129,14 +127,15 @@ function main()
         barycenter_coordinates[iteration, :] = rotation_matrix * barycenter_coordinates[iteration, :]
         didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
         dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
-        # Picture generation
+        # Rotate Didymos-Dimorphos points
         rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
         camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
         camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
-        x_pixel_coordinates_didymos[iteration] = camera_position_didymos[iteration, 1]/camera_position_didymos[iteration, 3]
-        y_pixel_coordinates_didymos[iteration] = camera_position_didymos[iteration, 2]/camera_position_didymos[iteration, 3]
-        x_pixel_coordinates_dimorphos[iteration] = camera_position_dimorphos[iteration, 1]/camera_position_dimorphos[iteration, 3]
-        y_pixel_coordinates_dimorphos[iteration] = camera_position_dimorphos[iteration, 2]/camera_position_dimorphos[iteration, 3]
+        # Store pixel coordinates for Didymos and Dimorphos
+        for j in 1:2
+            didymos_pixel_coordinates[iteration, j] = camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
+            dimorphos_pixel_coordinates[iteration, j] = camera_position_dimorphos[iteration, j]/camera_position_dimorphos[iteration, 3]
+        end
         iteration += 1
     end
 
@@ -163,7 +162,7 @@ function main()
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
     plotlyjs()
     plt3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
-    scatter3d!(x_dimorphos, y_dimorphos, z_dimorphos, color = "orange", markersize = 1, label = "Dimorphos")
+    scatter3d!(x_dimorphos, y_dimorphos, z_dimorphos, color = "orange", markersize = 1, label = "Dimorphos (RK4)")
 
     # Plot camera boundary lines
     sensor_boundary_points = zeros(Float64, 4, 3)
@@ -181,10 +180,10 @@ function main()
     end
 
     # Plot 2D image simulation   
-    plt2d = scatter(x_pixel_coordinates_didymos, y_pixel_coordinates_didymos, label= "Didymos")
-    scatter!(x_pixel_coordinates_dimorphos, y_pixel_coordinates_dimorphos, label = "Dimorphos")
+    plt2d = scatter(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], label= "Didymos")
+    scatter!(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], label = "Dimorphos")
     scatter!(x_pixel_coordinates_boundaries, y_pixel_coordinates_boundaries, label = "Camera boundaries")
-    display(plt3d)
+    display(plt2d)
 end
 
 main()
