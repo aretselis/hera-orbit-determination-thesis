@@ -5,10 +5,8 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
 
     # Preallocate required vectors
     size = Int64(ceil((t_end-t_start)/step)) + 1
-    println(size)
     tn = Vector{Float64}(undef, size)
     tn[1] = t_start
-    println(tn[1], size, step)
     xn = Vector{Float64}(undef, size)
     xn[1] = x_0
     yn = Vector{Float64}(undef, size)
