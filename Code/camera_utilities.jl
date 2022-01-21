@@ -46,17 +46,16 @@ function convert_to_pixels(x_data, y_data, x_boundaries, y_boundaries)
     y_pixel_range = LinRange(y_bottom_left, y_top_left, image_size)
     x_pixel = zeros(Int64, length(x_data))
     y_pixel = zeros(Int64, length(x_data))
-
     for i=1:length(x_data)
         # Assign x_pixel coordinate
-        for j=1:length(x_pixel_range)
+        for j=1:length(x_pixel_range)-1
             if x_data[i] >= x_pixel_range[j] && x_data[i] <= x_pixel_range[j+1]
                 x_pixel[i] = j
                 break
             end
         end
         # Assign y_pixel coordinate
-        for j=1:length(y_pixel_range)
+        for j=1:length(y_pixel_range)-1
             if y_data[i] >= y_pixel_range[j] && y_data[i] <= y_pixel_range[j+1]
                 y_pixel[i] = j
                 break
