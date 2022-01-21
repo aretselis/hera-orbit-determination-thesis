@@ -58,7 +58,7 @@ function main()
 
     # Dimorphos orbit
     a_dimorphos = 1183.0 # Semi-major axis
-    e_dimorphos = 0.01 # Eccentricity
+    e_dimorphos = 0.001 # Eccentricity
     i_dimorphos = 0.005 # Inclination
     Omega_dimorphos = 0.0 # Argument of periapsis
     omega_dimorphos = 0.0 # Longitude of the ascending node
@@ -99,6 +99,7 @@ function main()
     e_z = [0.0, 0.0, 1.0]
 
     # Main SPICE calculations loop
+    focal_length = 10.6*10^-5 # [km]
     iteration = 1
     println("\nSPICE calculations:")
     for i in ProgressBar(spice_start_time:step_size:spice_end_time)
@@ -133,8 +134,8 @@ function main()
         camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
         # Store pixel coordinates for Didymos and Dimorphos
         for j in 1:2
-            didymos_pixel_coordinates[iteration, j] = camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
-            dimorphos_pixel_coordinates[iteration, j] = camera_position_dimorphos[iteration, j]/camera_position_dimorphos[iteration, 3]
+            didymos_pixel_coordinates[iteration, j] = focal_length*camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
+            dimorphos_pixel_coordinates[iteration, j] = focal_length*camera_position_dimorphos[iteration, j]/camera_position_dimorphos[iteration, 3]
         end
         iteration += 1
     end
@@ -173,8 +174,8 @@ function main()
         sensor_boundary_points[i, 1] = x_line[length(x_line)]
         sensor_boundary_points[i, 2] = y_line[length(y_line)]
         sensor_boundary_points[i, 3] = z_line[length(z_line)]
-        x_boundaries[i] = x_line[length(x_line)]/z_line[length(z_line)]
-        y_boundaries[i] = y_line[length(y_line)]/z_line[length(z_line)]
+        x_boundaries[i] = focal_length*x_line[length(x_line)]/z_line[length(z_line)]
+        y_boundaries[i] = focal_length*y_line[length(y_line)]/z_line[length(z_line)]
         camera_label = "Camera boundary line " * string(i)
         plot3d!(x_line, y_line, z_line, color="green", label=camera_label) 
     end
