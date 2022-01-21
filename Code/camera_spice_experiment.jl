@@ -161,29 +161,40 @@ function main()
     x_didymos, y_didymos, z_didymos = didymos_coordinates[:, 1], didymos_coordinates[:, 2], didymos_coordinates[:, 3]
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
     plotlyjs()
-    plt3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
+    plt_3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
     scatter3d!(x_dimorphos, y_dimorphos, z_dimorphos, color = "orange", markersize = 1, label = "Dimorphos (RK4)")
 
-    # Plot camera boundary lines
+    # Compute and plot camera boundary lines
     sensor_boundary_points = zeros(Float64, 4, 3)
-    x_pixel_coordinates_boundaries = zeros(Float64, 4)
-    y_pixel_coordinates_boundaries = zeros(Float64, 4)
+    x_boundaries = zeros(Float64, 4)
+    y_boundaries = zeros(Float64, 4)
     for i in 1:4
         x_line, y_line, z_line = boundary_vectors_matrix[i, 1] * line_generator, boundary_vectors_matrix[i, 2] * line_generator, boundary_vectors_matrix[i, 3] * line_generator
         sensor_boundary_points[i, 1] = x_line[length(x_line)]
         sensor_boundary_points[i, 2] = y_line[length(y_line)]
         sensor_boundary_points[i, 3] = z_line[length(z_line)]
-        x_pixel_coordinates_boundaries[i] = x_line[length(x_line)]/z_line[length(z_line)]
-        y_pixel_coordinates_boundaries[i] = y_line[length(y_line)]/z_line[length(z_line)]
+        x_boundaries[i] = x_line[length(x_line)]/z_line[length(z_line)]
+        y_boundaries[i] = y_line[length(y_line)]/z_line[length(z_line)]
         camera_label = "Camera boundary line " * string(i)
         plot3d!(x_line, y_line, z_line, color="green", label=camera_label) 
     end
 
-    # Plot 2D image simulation   
-    plt2d = scatter(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], label= "Didymos")
+    # Compute coordinates in pixels
+    x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+    x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+    x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
+
+    # Plot 2D image simulation (camera plane)  
+    plt_2d = scatter(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], label= "Didymos")
     scatter!(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], label = "Dimorphos")
-    scatter!(x_pixel_coordinates_boundaries, y_pixel_coordinates_boundaries, label = "Camera boundaries")
-    display(plt2d)
+    scatter!(x_boundaries, y_boundaries, label = "Camera boundaries")
+
+    # Plot image using pixels 
+    plt_pixel = scatter(x_pixel_didymos, y_pixel_didymos, label = "Didymos")
+    scatter!(x_pixel_dimorphos, y_pixel_dimorphos, label = "Dimorphos")
+    scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
+
+    display(plt_pixel)
 end
 
 main()
