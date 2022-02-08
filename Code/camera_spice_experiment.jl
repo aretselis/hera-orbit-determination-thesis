@@ -1,8 +1,9 @@
-using SPICE, ProgressBars, Plots, LinearAlgebra
+using SPICE, ProgressBars, Plots, LinearAlgebra, Optim
 include("orbital_utilities.jl")
 include("propagators.jl")
 include("spice_utilities.jl")
 include("camera_utilities.jl")
+include("optimization.jl")
 
 
 function load_hera_spice_kernels()
@@ -43,26 +44,13 @@ end
 
 
 function main()
-    # System properties
-    G = 6.67430*10^-11
-    mass_didymos = 5.32*10^11
-    mass_dimorphos = 4.94*10^11
-    mu_system = G*(mass_didymos+mass_dimorphos)
-
-    # Time properties
-    hour = 3600.0
-    number_of_steps = 1000
-    start_time = 0.0
-    end_time = 200*hour
-    step_size = (end_time-start_time)/number_of_steps
-
     # Dimorphos orbit
     a_dimorphos = 1183.0 # Semi-major axis
-    e_dimorphos = 0.001 # Eccentricity
+    e_dimorphos = 0.00001 # Eccentricity
     i_dimorphos = 0.005 # Inclination
     Omega_dimorphos = 0.0 # Argument of periapsis
     omega_dimorphos = 0.0 # Longitude of the ascending node
-    M_dimorphos = 0.0 # Time of periapsis passage
+    M_dimorphos = 0.0 # Mean anomaly
 
     # Compute initial position and velocity vector from orbital elements
     r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
@@ -77,10 +65,7 @@ function main()
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, step_size)
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
-    load_hera_spice_kernels()
-
     # Orbit start and end time (for SPICE)
-    spice_start_time = utc2et("2027-02-25T08:14:58")
     spice_end_time = spice_start_time + end_time
 
     # Initialize position arrays (x, y, z)
@@ -155,9 +140,6 @@ function main()
         end
     end
 
-    # Free used kernels
-    kclear()
-
     # Plot 3D image for reference    
     x_didymos, y_didymos, z_didymos = didymos_coordinates[:, 1], didymos_coordinates[:, 2], didymos_coordinates[:, 3]
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
@@ -167,8 +149,8 @@ function main()
 
     # Compute and plot camera boundary lines
     sensor_boundary_points = zeros(Float64, 4, 3)
-    x_boundaries = zeros(Float64, 4)
-    y_boundaries = zeros(Float64, 4)
+    global x_boundaries = zeros(Float64, 4)
+    global y_boundaries = zeros(Float64, 4)
     for i in 1:4
         x_line, y_line, z_line = boundary_vectors_matrix[i, 1] * line_generator, boundary_vectors_matrix[i, 2] * line_generator, boundary_vectors_matrix[i, 3] * line_generator
         sensor_boundary_points[i, 1] = x_line[length(x_line)]
@@ -177,13 +159,40 @@ function main()
         x_boundaries[i] = focal_length*x_line[length(x_line)]/z_line[length(z_line)]
         y_boundaries[i] = focal_length*y_line[length(y_line)]/z_line[length(z_line)]
         camera_label = "Camera boundary line " * string(i)
-        plot3d!(x_line, y_line, z_line, color="green", label=camera_label) 
+        #plot3d!(x_line, y_line, z_line, color="green", label=camera_label) 
     end
 
     # Compute coordinates in pixels
     x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
-    x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+    global x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
+
+    # Bounds for optimization
+    lower = [1190-30, 0, 0, 0, 0, 0]
+    upper = [1190+30, 0.0001, 5, 50, 60 , 30]
+    initial_guess = [1200.0, 0.0000001, 1.0, 20.0, 30.0, 10.0]
+
+    # Minimize square mean error to find best orbital elements
+    global res = optimize(residuals, initial_guess, Optim.Options(iterations = 10000, show_trace = true))
+    print(res)
+    print(Optim.minimizer(res))
+
+    # Extract final guess from optimization
+    a_final = Optim.minimizer(res)[1]
+    e_final = Optim.minimizer(res)[2]
+    i_final = Optim.minimizer(res)[3]
+    Omega_final = Optim.minimizer(res)[4]
+    omega_final = Optim.minimizer(res)[5]
+    M_final = Optim.minimizer(res)[6]
+
+    # Compute pixel and 3D points from dimorphos as a result of the optimization
+    x_pixel_fit_dimorphos, y_pixel_fit_dimorphos = propagate_and_compute_dimorphos_pixel_points(a_final, e_final, i_final, Omega_final, omega_final, M_final, start_time, end_time, step_size, spice_start_time)
+    dimorphos_fit_coordinates = propagate_and_compute_dimorphos_3D_points(a_final, e_final, i_final, Omega_final, omega_final, M_final, start_time, end_time, step_size, spice_start_time)
+    x_fit_dimorphos = dimorphos_fit_coordinates[:, 1]
+    y_fit_dimorphos = dimorphos_fit_coordinates[:, 2]
+    z_fit_dimorphos = dimorphos_fit_coordinates[:, 3]
+    scatter3d!(x_fit_dimorphos, y_fit_dimorphos, z_fit_dimorphos, color = "purple", markersize = 1, label = "Dimorphos (Final guess)")
+
 
     # Plot 2D image simulation (camera plane)  
     plt_2d = scatter(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], label= "Didymos")
@@ -193,9 +202,30 @@ function main()
     # Plot image using pixels 
     plt_pixel = scatter(x_pixel_didymos, y_pixel_didymos, label = "Didymos")
     scatter!(x_pixel_dimorphos, y_pixel_dimorphos, label = "Dimorphos")
+    scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
     scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
 
-    display(plt_pixel)
+    display(plt_3d)
 end
 
+load_hera_spice_kernels()
+
+# System properties
+G = 6.67430*10^-11
+mass_didymos = 5.32*10^11
+mass_dimorphos = 4.94*10^11
+global mu_system = G*(mass_didymos+mass_dimorphos)
+
+# Time properties
+hour = 3600.0
+number_of_steps = 1000
+global start_time = 0.0
+global end_time = 200*hour
+global step_size = (end_time-start_time)/number_of_steps
+global spice_start_time = utc2et("2027-02-25T08:14:58")
+
+
 main()
+
+# Free used kernels
+kclear()
