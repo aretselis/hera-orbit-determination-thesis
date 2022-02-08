@@ -37,7 +37,7 @@ function eccentric_anomaly_calculator(mean_anomaly, e)
             error("Max repetitions reached without achieving desired accuracy for E!")
         end
     end
-    E = E_next
+    E = E_prev
     return E
 end
 
@@ -102,4 +102,161 @@ function orbit_evolution_and_cartesian_transform(a, e, i, n, po, tau, GM, time)
     L = nu*(time-tau)
     # Compute orbit vectors
     x, y, z, v_x, v_y, v_z = mco_el2x
+end
+
+
+function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time)
+    # Compute initial position and velocity vector from orbital elements
+    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
+    x = r_vector[1]
+    y = r_vector[2]
+    z = r_vector[3]
+    vx = v_vector[1]
+    vy = v_vector[2]
+    vz = v_vector[3]
+
+    # Propagate Dimorphos
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, step_size)
+    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+
+    # Orbit start and end time (for SPICE)
+    spice_end_time = spice_start_time + end_time
+
+    # Initialize position arrays (x, y, z)
+    didymos_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    barycenter_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    barycenter_offset = zeros(Float64, 3)
+    barycenter_initial_coordinates = zeros(Float64, 3)
+    camera_position_didymos = zeros(Float64, number_of_steps + 1, 3)
+    camera_position_dimorphos = zeros(Float64, number_of_steps + 1, 3)
+    didymos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+
+    # HERA_AFC-1 coordinate system unit vectors
+    e_x = [1.0, 0.0, 0.0]
+    e_y = [0.0, 1.0, 0.0]
+    e_z = [0.0, 0.0, 1.0]
+
+    # Main SPICE calculations loop
+    focal_length = 10.6*10^-5 # [km]
+    iteration = 1
+    #println("\nSPICE calculations:")
+    for i in (spice_start_time:step_size:spice_end_time)
+        position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
+        position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
+        rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
+        position_dimorphos = rotation_frame * dimorphos_coordinates[iteration, :]
+        # Get didymos reference position or translate hera_coordinates
+        if iteration == 1
+            for j in 1:3
+                barycenter_initial_coordinates[j] = position_system_barycenter[j]
+            end
+        else
+            for j in 1:3
+                barycenter_offset[j] = barycenter_initial_coordinates[j] - position_system_barycenter[j]
+            end
+        end
+        # Apply offset to all coordinates
+        for j in 1:3
+            barycenter_coordinates[iteration, j] =  position_system_barycenter[j] + barycenter_offset[j]
+            didymos_coordinates[iteration, j] =  position_didymos[j] + barycenter_offset[j]
+            dimorphos_coordinates[iteration, j] =  position_dimorphos[j] + barycenter_initial_coordinates[j]
+        end
+        # Rotate HERA_AFC-1 camera reference frame assuming it is always tracking the barycenter
+        rotation_matrix = compute_rotation_matrix(barycenter_coordinates[iteration, :], e_z)
+        barycenter_coordinates[iteration, :] = rotation_matrix * barycenter_coordinates[iteration, :]
+        didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
+        dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Rotate Didymos-Dimorphos points
+        rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
+        camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
+        camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Store pixel coordinates for Didymos and Dimorphos
+        for j in 1:2
+            didymos_pixel_coordinates[iteration, j] = focal_length*camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
+            dimorphos_pixel_coordinates[iteration, j] = focal_length*camera_position_dimorphos[iteration, j]/camera_position_dimorphos[iteration, 3]
+        end
+        iteration += 1
+    end
+
+    x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+
+    return x_pixel_dimorphos, y_pixel_dimorphos
+end
+
+
+function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time)
+    # Compute initial position and velocity vector from orbital elements
+    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
+    x = r_vector[1]
+    y = r_vector[2]
+    z = r_vector[3]
+    vx = v_vector[1]
+    vy = v_vector[2]
+    vz = v_vector[3]
+
+    # Propagate Dimorphos
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, step_size)
+    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+
+    # Orbit start and end time (for SPICE)
+    spice_end_time = spice_start_time + end_time
+
+    # Initialize position arrays (x, y, z)
+    didymos_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    barycenter_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    barycenter_offset = zeros(Float64, 3)
+    barycenter_initial_coordinates = zeros(Float64, 3)
+    camera_position_didymos = zeros(Float64, number_of_steps + 1, 3)
+    camera_position_dimorphos = zeros(Float64, number_of_steps + 1, 3)
+    didymos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+
+    # HERA_AFC-1 coordinate system unit vectors
+    e_x = [1.0, 0.0, 0.0]
+    e_y = [0.0, 1.0, 0.0]
+    e_z = [0.0, 0.0, 1.0]
+
+    # Main SPICE calculations loop
+    focal_length = 10.6*10^-5 # [km]
+    iteration = 1
+    #println("\nSPICE calculations:")
+    for i in (spice_start_time:step_size:spice_end_time)
+        position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
+        position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
+        rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
+        position_dimorphos = rotation_frame * dimorphos_coordinates[iteration, :]
+        # Get didymos reference position or translate hera_coordinates
+        if iteration == 1
+            for j in 1:3
+                barycenter_initial_coordinates[j] = position_system_barycenter[j]
+            end
+        else
+            for j in 1:3
+                barycenter_offset[j] = barycenter_initial_coordinates[j] - position_system_barycenter[j]
+            end
+        end
+        # Apply offset to all coordinates
+        for j in 1:3
+            barycenter_coordinates[iteration, j] =  position_system_barycenter[j] + barycenter_offset[j]
+            didymos_coordinates[iteration, j] =  position_didymos[j] + barycenter_offset[j]
+            dimorphos_coordinates[iteration, j] =  position_dimorphos[j] + barycenter_initial_coordinates[j]
+        end
+        # Rotate HERA_AFC-1 camera reference frame assuming it is always tracking the barycenter
+        rotation_matrix = compute_rotation_matrix(barycenter_coordinates[iteration, :], e_z)
+        barycenter_coordinates[iteration, :] = rotation_matrix * barycenter_coordinates[iteration, :]
+        didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
+        dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Rotate Didymos-Dimorphos points
+        rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
+        camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
+        camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Store pixel coordinates for Didymos and Dimorphos
+        for j in 1:2
+            didymos_pixel_coordinates[iteration, j] = focal_length*camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
+            dimorphos_pixel_coordinates[iteration, j] = focal_length*camera_position_dimorphos[iteration, j]/camera_position_dimorphos[iteration, 3]
+        end
+        iteration += 1
+    end
+    return dimorphos_coordinates
 end
