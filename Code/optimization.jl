@@ -6,7 +6,7 @@ function residuals(orbit)
     omega = orbit[5]
     M = orbit[6]
     observed_x, oberved_y = x_pixel_dimorphos, y_pixel_dimorphos
-    predicted_x, predicted_y = propagate_and_compute_didymos_pixel_points(a, e, i, Omega, omega, M, start_time, end_time, step_size, spice_start_time)
+    predicted_x, predicted_y = propagate_and_compute_dimorphos_pixel_points(a, e, i, Omega, omega, M, start_time, end_time, step_size, spice_start_time)
     xhi2 = sum_of_squared_residuals(observed_x, oberved_y, predicted_x, predicted_y)
     return xhi2
 end
