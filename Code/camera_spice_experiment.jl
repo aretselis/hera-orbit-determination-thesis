@@ -4,6 +4,7 @@ include("propagators.jl")
 include("spice_utilities.jl")
 include("camera_utilities.jl")
 include("optimization.jl")
+include("results.jl")
 
 
 function load_hera_spice_kernels()
@@ -45,12 +46,12 @@ end
 
 function main()
     # Dimorphos orbit
-    a_dimorphos = 1183.0 # Semi-major axis
-    e_dimorphos = 0.00001 # Eccentricity
-    i_dimorphos = 0.005 # Inclination
-    Omega_dimorphos = 0.0 # Argument of periapsis
-    omega_dimorphos = 0.0 # Longitude of the ascending node
-    M_dimorphos = 0.0 # Mean anomaly
+    a_dimorphos = 1183.725 # Semi-major axis
+    e_dimorphos = 0.00039 # Eccentricity
+    i_dimorphos = 3.6 # Inclination
+    Omega_dimorphos = 0.01 # Argument of periapsis
+    omega_dimorphos = 0.02 # Longitude of the ascending node
+    M_dimorphos = 0.001 # Mean anomaly
 
     # Compute initial position and velocity vector from orbital elements
     r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
@@ -168,14 +169,14 @@ function main()
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
 
     # Bounds for optimization
-    lower = [1190-30, 0, 0, 0, 0, 0]
-    upper = [1190+30, 0.0001, 5, 50, 60 , 30]
-    initial_guess = [1200.0, 0.0000001, 1.0, 20.0, 30.0, 10.0]
+    lower = [1190.0-30, 0.0, 0.0, 0.0, 0.0, 0.0]
+    upper = [1190.0+30, 0.001, 5.0, 0.1, 0.1, 0.1]
+    initial_guess = [1200.0, 0.0001, 1.0, 0.05, 0.05, 0.05]
 
     # Minimize square mean error to find best orbital elements
-    global res = optimize(residuals, initial_guess, Optim.Options(iterations = 10000, show_trace = true))
+    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 43), Optim.Options(iterations = 100, g_tol = 1e-10, show_trace = true))
     print(res)
-    print(Optim.minimizer(res))
+    println(Optim.minimizer(res))
 
     # Extract final guess from optimization
     a_final = Optim.minimizer(res)[1]
@@ -184,6 +185,11 @@ function main()
     Omega_final = Optim.minimizer(res)[4]
     omega_final = Optim.minimizer(res)[5]
     M_final = Optim.minimizer(res)[6]
+
+    # Compute percentage error of the predicted orbit relative to the initial orbit 
+    initial_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
+    final_elements = [a_final, e_final, i_final, Omega_final, omega_final, M_final]
+    compute_percentage_error(initial_elements, final_elements)
 
     # Compute pixel and 3D points from dimorphos as a result of the optimization
     x_pixel_fit_dimorphos, y_pixel_fit_dimorphos = propagate_and_compute_dimorphos_pixel_points(a_final, e_final, i_final, Omega_final, omega_final, M_final, start_time, end_time, step_size, spice_start_time)
