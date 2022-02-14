@@ -63,8 +63,37 @@ function main()
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, step_size)
+    propagation_steps = 10000
+    propagation_step_size = (end_time-start_time)/propagation_steps
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size)
+    # Select every 10th element to match the photos
+    x_dimorphos = x_dimorphos[1:10:end]
+    y_dimorphos = y_dimorphos[1:10:end]
+    z_dimorphos = z_dimorphos[1:10:end]
+    vx_dimorphos = vx_dimorphos[1:10:end]
+    vy_dimorphos = vy_dimorphos[1:10:end]
+    vz_dimorphos = vz_dimorphos[1:10:end]
+    t_vector = t_vector[1:10:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+
+    # Compute orbital elements vs time for the original orbit
+    a_vector = zeros(Float64, number_of_steps + 1)
+    e_vector = zeros(Float64, number_of_steps + 1)
+    i_vector = zeros(Float64, number_of_steps + 1)
+    Omega_vector = zeros(Float64, number_of_steps + 1)
+    omega_vector = zeros(Float64, number_of_steps + 1)
+    M_vector = zeros(Float64, number_of_steps + 1)
+    for i in 1:(number_of_steps+1)
+        a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
+    end
+
+    plotlyjs()
+    plt_oe_vs_time = scatter(t_vector, a_vector, label= "a(t)")
+    scatter!(t_vector, e_vector, label= "e(t)")
+    scatter!(t_vector, i_vector, label= "i(t)")
+    scatter!(t_vector, Omega_vector, label= "Omega(t)")
+    scatter!(t_vector, omega_vector, label= "omega(t)")
+    scatter!(t_vector, M_vector, label= "M(t)")
 
     # Orbit start and end time (for SPICE)
     spice_end_time = spice_start_time + end_time
@@ -144,7 +173,6 @@ function main()
     # Plot 3D image for reference    
     x_didymos, y_didymos, z_didymos = didymos_coordinates[:, 1], didymos_coordinates[:, 2], didymos_coordinates[:, 3]
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
-    plotlyjs()
     plt_3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
     scatter3d!(x_dimorphos, y_dimorphos, z_dimorphos, color = "orange", markersize = 1, label = "Dimorphos (RK4)")
 
@@ -174,7 +202,7 @@ function main()
     initial_guess = [1200.0, 0.0001, 1.0, 0.05, 0.05, 0.05]
 
     # Minimize square mean error to find best orbital elements
-    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 43), Optim.Options(iterations = 100, g_tol = 1e-10, show_trace = true))
+    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 43), Optim.Options( callback = cb, iterations = 100, g_tol = 1e-10, show_trace = true, extended_trace=true))
     print(res)
     println(Optim.minimizer(res))
 
@@ -210,8 +238,13 @@ function main()
     scatter!(x_pixel_dimorphos, y_pixel_dimorphos, label = "Dimorphos")
     scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
     scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
+    
+    display(plt_pixel)
+end
 
-    display(plt_3d)
+function cb(os)
+    println(os.metadata)
+    return false    
 end
 
 load_hera_spice_kernels()
