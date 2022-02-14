@@ -84,6 +84,80 @@ function orbital_elements_to_cartesian(a, e, i, Omega, omega, M, mu)
 end 
 
 
+function cartesian_to_orbital_elements(r_vector, v_vector, mu)
+    #=
+    Computes cartesian position and velocity vector given some orbital elements
+    Input:
+    r_vector [m] , v_vector [m/s]
+    mu [m^3/(kg*s^2)] (GM)
+    Output:
+    a [m] (Semi-major axis)
+    e [] (Eccentricity)
+    i [deg] (Inclination)
+    Omega [deg] (Longitude of the ascending node)
+    omega [deg] (Argument of pericenter)
+    ni [deg] (True anomaly)
+    M [deg] (Mean anomaly)
+    =#
+
+    # Compute magnitude and angular momentum
+    r = sqrt(r_vector[1]^2 + r_vector[2]^2 + r_vector[3]^2)
+    v = sqrt(v_vector[1]^2 + v_vector[2]^2 + v_vector[3]^2)
+    h_vector = cross(r_vector, v_vector)
+    h = sqrt(h_vector[1]^2 + h_vector[2]^2 + h_vector[3]^2)
+    # Compute a, e and i 
+    a = mu/((2*mu/r) - v^2)
+    e = sqrt(1 - ((h^2)/(mu*a)))
+    i = acos(h_vector[3]/h)
+    # Compute Omega (Longitude of the ascending node)
+    if h_vector[3] > 0
+        sin_Omega =   h_vector[1] / (h * sin(i))
+        cos_Omega = - h_vector[2] / (h * sin(i))
+    else
+        sin_Omega = - h_vector[1] / (h * sin(i))
+        cos_Omega =   h_vector[2] / (h * sin(i))
+    end
+    if sin_Omega >= 0
+        Omega = acos(cos_Omega)
+    else
+        Omega = 2*pi - acos(cos_Omega)
+    end
+    # Compute E 
+    cos_E = (a-r)/(a*e)
+    sin_E = dot(r_vector, v_vector) / (e*sqrt(mu*a))
+    # Compute true anomaly
+    cos_ni = (cos_E - e) / (1 - (e*cos_E))
+    sin_ni = (sqrt(1 - e^2) * sin_E) / (1 - (e * cos_E))
+    if sin_ni >=0
+        ni = acos(cos_ni)
+    else
+        ni = 2*pi - acos(cos_ni)
+    end
+    # Compute mean anomaly
+    if sin_E >=0
+        E = acos(cos_E)
+    else
+        E = 2*pi - acos(cos_E)
+    end
+    M = E - e*sin_E
+    # Compute omega (argument of pericenter)
+    sin_omega_plus_ni = r_vector[3] / (r*sin(i))
+    cos_omega_plus_ni = ((r_vector[1]*cos_Omega) + (r_vector[2]*sin_Omega))/r
+    if sin_omega_plus_ni >=0
+        omega = acos(cos_omega_plus_ni) - ni
+    else
+        omega = 2*pi - acos(cos_omega_plus_ni) - ni
+    end
+    # Convert to degrees
+    i = rad2deg(i)
+    Omega = rad2deg(Omega)
+    ni = rad2deg(ni)
+    M = rad2deg(M)
+    omega = rad2deg(omega)
+    return a, e, i, Omega, omega, M
+end
+
+
 function orbit_evolution_and_cartesian_transform(a, e, i, n, po, tau, GM, time)
     #=
     Computes the orbit at the specified time step_size
