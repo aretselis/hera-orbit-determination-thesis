@@ -190,7 +190,17 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, step_size)
+    propagation_steps = 10000
+    propagation_step_size = (end_time-start_time)/propagation_steps
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size)
+    # Select every 10th element to match the photos
+    x_dimorphos = x_dimorphos[1:10:end]
+    y_dimorphos = y_dimorphos[1:10:end]
+    z_dimorphos = z_dimorphos[1:10:end]
+    vx_dimorphos = vx_dimorphos[1:10:end]
+    vy_dimorphos = vy_dimorphos[1:10:end]
+    vz_dimorphos = vz_dimorphos[1:10:end]
+    t_vector = t_vector[1:10:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
