@@ -16,6 +16,7 @@ function load_hera_spice_kernels()
     planets_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\de432s.bsp"
     didymos_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3_v01.bsp"
     dimorphos_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3_v01.bsp"
+    didymos_barycenter_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\didymos_hor_000101_500101_v01.bsp"
     hera_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_sc_PO_v01.bsp"
     hera_ck = "C:\\Users\\retse\\repos\\hera-data\\kernels\\ck\\hera_sc_PO_EMA_20270209_20270727_f20181203_v03.bc"
     hera_equipment = "C:\\Users\\retse\\repos\\hera-data\\kernels\\fk\\hera_v07.tf"
@@ -34,6 +35,7 @@ function load_hera_spice_kernels()
     furnsh(planets_kernel)
     furnsh(didymos_kernel)
     furnsh(dimorphos_kernel)
+    furnsh(didymos_barycenter_kernel)
     furnsh(hera_kernel)
     furnsh(hera_ck)
     furnsh(hera_equipment)
@@ -252,8 +254,9 @@ load_hera_spice_kernels()
 # System properties
 G = 6.67430*10^-11
 mass_didymos = 5.32*10^11
-mass_dimorphos = 4.94*10^11
+global mass_dimorphos = 4.94*10^11
 global mu_system = G*(mass_didymos+mass_dimorphos)
+global c = 3.0*10^8
 
 # Time properties
 hour = 3600.0
