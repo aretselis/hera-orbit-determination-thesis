@@ -183,13 +183,13 @@ function sight_algorithm(r1_vector, r2_vector)
     #=
     Computes if there is sight between two points in space (assuming Didymos to be the obstuction)
     INPUT:
-    r1_vector, Vector(Float64, 3), position vector of the first point in [km]
-    r2_vector, Vector(Float64, 3), position vector of the second point in [km]
+    r1_vector, Vector(Float64, 3), position vector of the first point in [m]
+    r2_vector, Vector(Float64, 3), position vector of the second point in [m]
     OUTPUT:
     0, if there is no line of sight between the two points
     1, if there is line of sight between the two points
     =#
-    radius_didymos = 0.8 # [km]
+    radius_didymos = 325 # [m]
     r1_magnitude = sqrt(r1_vector[1]^2 + r1_vector[2]^2 + r1_vector[3]^2)
     r2_magnitude = sqrt(r2_vector[1]^2 + r2_vector[2]^2 + r2_vector[3]^2)
     tau_min = (r1_magnitude^2 - dot(r1_vector, r2_vector))/(r1_magnitude^2 + r2_magnitude^2 - (2*dot(r1_vector, r2_vector)))
@@ -202,8 +202,49 @@ function sight_algorithm(r1_vector, r2_vector)
             line_of_sight = true
         end
     end
+    if line_of_sight == false
+        println("Shadow!")
+    end
     return Int64(line_of_sight)
 end 
+
+
+function geometrical_shadow_check(x_dimorphos, y_dimorphos, z_dimorphos, x_sun, y_sun, z_sun)
+    radius_didymos = 325 # [m]
+    radius_sun = 696340000 # [m]
+    distance = sqrt(x_sun^2 + y_sun^2 + z_sun^2)
+    a_umbra = asin((radius_sun - radius_didymos)/distance)
+    a_penumbra = asin((radius_sun + radius_didymos)/distance)
+    # Initially assume we are in sunlight, compute magnitudes and dot product
+    shadow = 1
+    r_dimorphos_magnitude = sqrt(x_dimorphos^2 + y_dimorphos^2 + z_dimorphos^2)
+    r_sun_magnitude = sqrt(x_sun^2 + y_sun^2 + z_sun^2)
+    dot_product = x_dimorphos*x_sun + y_dimorphos*y_sun + z_dimorphos*z_sun
+    # Decide if we should evaluate umbra/penumbra possibility
+    if dot_product < 0
+        dot_product = -x_dimorphos * x_sun - y_dimorphos * y_sun - z_dimorphos * z_sun
+        angle_s = acos(dot_product/(r_dimorphos_magnitude*r_sun_magnitude))
+        sat_horizontal = r_dimorphos_magnitude*cos(angle_s)
+        sat_vertical = r_dimorphos_magnitude*sin(angle_s)
+        x = radius_didymos/sin(a_penumbra)
+        pen_vertical = tan(a_penumbra)*(x+sat_horizontal)
+        if sat_vertical <= pen_vertical
+            println("SHADOWS!")
+            y = planet_radius/sin(a_umbra)
+            umb_vertical = tan(a_umbra)*(y-sat_horizontal)
+            if sat_vertical <= umb_vertical
+                shadow = 0
+            else
+                # Assume that Solar Intensity decreases linearly, calculate shadow value
+                slope = (1-0)/(pen_vertical-umb_vertical)
+                sat_vertical = sat_vertical - umb_vertical
+                shadow = slope*sat_vertical
+            end
+        end
+    end
+    return shadow
+
+end
 
 
 function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time)
@@ -216,10 +257,14 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     vy = v_vector[2]
     vz = v_vector[3]
 
+    # Dimorphos properties
+    area_dimorphos = 2*pi*85.0^2
+    c_p = 2.2
+
     # Propagate Dimorphos
     propagation_steps = 10000
     propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
     # Select every 10th element to match the photos
     x_dimorphos = x_dimorphos[1:10:end]
     y_dimorphos = y_dimorphos[1:10:end]
@@ -306,8 +351,22 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     vy = v_vector[2]
     vz = v_vector[3]
 
+    # Dimorphos properties
+    area_dimorphos = 2*pi*85.0^2
+    c_p = 2.2
+
     # Propagate Dimorphos
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, step_size)
+    propagation_steps = 10000
+    propagation_step_size = (end_time-start_time)/propagation_steps
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
+    # Select every 10th element to match the photos
+    x_dimorphos = x_dimorphos[1:10:end]
+    y_dimorphos = y_dimorphos[1:10:end]
+    z_dimorphos = z_dimorphos[1:10:end]
+    vx_dimorphos = vx_dimorphos[1:10:end]
+    vy_dimorphos = vy_dimorphos[1:10:end]
+    vz_dimorphos = vz_dimorphos[1:10:end]
+    t_vector = t_vector[1:10:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
