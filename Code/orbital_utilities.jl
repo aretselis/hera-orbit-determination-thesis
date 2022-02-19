@@ -230,7 +230,7 @@ function geometrical_shadow_check(x_dimorphos, y_dimorphos, z_dimorphos, x_sun, 
         pen_vertical = tan(a_penumbra)*(x+sat_horizontal)
         if sat_vertical <= pen_vertical
             println("SHADOWS!")
-            y = planet_radius/sin(a_umbra)
+            y = radius_didymos/sin(a_umbra)
             umb_vertical = tan(a_umbra)*(y-sat_horizontal)
             if sat_vertical <= umb_vertical
                 shadow = 0
