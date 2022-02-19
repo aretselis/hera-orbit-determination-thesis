@@ -50,10 +50,14 @@ function main()
     # Dimorphos orbit
     a_dimorphos = 1183.725 # Semi-major axis
     e_dimorphos = 0.00039 # Eccentricity
-    i_dimorphos = 3.6 # Inclination
-    Omega_dimorphos = 0.01 # Argument of periapsis
-    omega_dimorphos = 0.02 # Longitude of the ascending node
-    M_dimorphos = 0.001 # Mean anomaly
+    i_dimorphos = 6.9 # Inclination
+    Omega_dimorphos = 7.2 # Argument of periapsis
+    omega_dimorphos = 5.8 # Longitude of the ascending node
+    M_dimorphos = 3.85 # Mean anomaly
+
+    # Dimorphos properties
+    area_dimorphos = 2*pi*85.0^2
+    c_p = 2.2
 
     # Compute initial position and velocity vector from orbital elements
     r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
@@ -67,7 +71,7 @@ function main()
     # Propagate Dimorphos
     propagation_steps = 10000
     propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
     # Select every 10th element to match the photos
     x_dimorphos = x_dimorphos[1:10:end]
     y_dimorphos = y_dimorphos[1:10:end]
@@ -90,12 +94,12 @@ function main()
     end
 
     plotlyjs()
-    plt_oe_vs_time = scatter(t_vector, a_vector, label= "a(t)")
-    scatter!(t_vector, e_vector, label= "e(t)")
-    scatter!(t_vector, i_vector, label= "i(t)")
-    scatter!(t_vector, Omega_vector, label= "Omega(t)")
-    scatter!(t_vector, omega_vector, label= "omega(t)")
-    scatter!(t_vector, M_vector, label= "M(t)")
+    plt_oe_vs_time = plot(t_vector, a_vector, label= "a(t)")
+    #scatter!(t_vector, e_vector, label= "e(t)")
+    #scatter!(t_vector, i_vector, label= "i(t)")
+    #scatter!(t_vector, Omega_vector, label= "Omega(t)")
+    #scatter!(t_vector, omega_vector, label= "omega(t)")
+    #scatter!(t_vector, M_vector, label= "M(t)")
 
     # Orbit start and end time (for SPICE)
     spice_end_time = spice_start_time + end_time
@@ -175,8 +179,8 @@ function main()
     # Plot 3D image for reference    
     x_didymos, y_didymos, z_didymos = didymos_coordinates[:, 1], didymos_coordinates[:, 2], didymos_coordinates[:, 3]
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
-    plt_3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
-    scatter3d!(x_dimorphos, y_dimorphos, z_dimorphos, color = "orange", markersize = 1, label = "Dimorphos (RK4)")
+    #plt_3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
+    #scatter3d!(x_dimorphos, y_dimorphos, z_dimorphos, color = "orange", markersize = 1, label = "Dimorphos (RK4)")
 
     # Compute and plot camera boundary lines
     sensor_boundary_points = zeros(Float64, 4, 3)
@@ -199,12 +203,12 @@ function main()
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
 
     # Bounds for optimization
-    lower = [1190.0-30, 0.0, 0.0, 0.0, 0.0, 0.0]
-    upper = [1190.0+30, 0.001, 5.0, 0.1, 0.1, 0.1]
-    initial_guess = [1200.0, 0.0001, 1.0, 0.05, 0.05, 0.05]
+    lower = [1190.0-30, 0.0, 0.0, 0.0, 1.0, 0.0]
+    upper = [1190.0+30, 0.001, 10.0, 10.0, 10.0, 10.0]
+    initial_guess = [1200.0, 0.0001, 4.0, 5.0, 3.0, 7.0]
 
     # Minimize square mean error to find best orbital elements
-    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 43), Optim.Options( callback = cb, iterations = 100, g_tol = 1e-10, show_trace = true, extended_trace=true))
+    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 50), Optim.Options(iterations = 150, g_tol = 1e-10, show_trace = true))
     print(res)
     println(Optim.minimizer(res))
 
@@ -215,6 +219,48 @@ function main()
     Omega_final = Optim.minimizer(res)[4]
     omega_final = Optim.minimizer(res)[5]
     M_final = Optim.minimizer(res)[6]
+
+    # Compute initial position and velocity vector from orbital elements
+    r_vector, v_vector = orbital_elements_to_cartesian(a_final, e_final, i_final, Omega_final, omega_final, M_final, mu_system)
+    x = r_vector[1]
+    y = r_vector[2]
+    z = r_vector[3]
+    vx = v_vector[1]
+    vy = v_vector[2]
+    vz = v_vector[3]
+
+    # Propagate Dimorphos
+    propagation_steps = 10000
+    propagation_step_size = (end_time-start_time)/propagation_steps
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
+    # Select every 10th element to match the photos
+    x_dimorphos = x_dimorphos[1:10:end]
+    y_dimorphos = y_dimorphos[1:10:end]
+    z_dimorphos = z_dimorphos[1:10:end]
+    vx_dimorphos = vx_dimorphos[1:10:end]
+    vy_dimorphos = vy_dimorphos[1:10:end]
+    vz_dimorphos = vz_dimorphos[1:10:end]
+    t_vector = t_vector[1:10:end]
+    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+
+    # Compute orbital elements vs time for the original orbit
+    a_vector = zeros(Float64, number_of_steps + 1)
+    e_vector = zeros(Float64, number_of_steps + 1)
+    i_vector = zeros(Float64, number_of_steps + 1)
+    Omega_vector = zeros(Float64, number_of_steps + 1)
+    omega_vector = zeros(Float64, number_of_steps + 1)
+    M_vector = zeros(Float64, number_of_steps + 1)
+    for i in 1:(number_of_steps+1)
+        a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
+    end
+
+    # plotlyjs()
+    #plt_oe_vs_time = plot(t_vector, a_vector, label= "a(t)")
+    plot!(t_vector, a_vector, label= "a(t) (fit)")
+    #scatter!(t_vector, i_vector, label= "i(t)")
+    #scatter!(t_vector, Omega_vector, label= "Omega(t)")
+    #scatter!(t_vector, omega_vector, label= "omega(t)")
+    #scatter!(t_vector, M_vector, label= "M(t)")
 
     # Compute percentage error of the predicted orbit relative to the initial orbit 
     initial_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
@@ -227,7 +273,7 @@ function main()
     x_fit_dimorphos = dimorphos_fit_coordinates[:, 1]
     y_fit_dimorphos = dimorphos_fit_coordinates[:, 2]
     z_fit_dimorphos = dimorphos_fit_coordinates[:, 3]
-    scatter3d!(x_fit_dimorphos, y_fit_dimorphos, z_fit_dimorphos, color = "purple", markersize = 1, label = "Dimorphos (Final guess)")
+    #scatter3d!(x_fit_dimorphos, y_fit_dimorphos, z_fit_dimorphos, color = "purple", markersize = 1, label = "Dimorphos (Final guess)")
 
 
     # Plot 2D image simulation (camera plane)  
@@ -240,8 +286,8 @@ function main()
     scatter!(x_pixel_dimorphos, y_pixel_dimorphos, label = "Dimorphos")
     scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
     scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
-    
-    display(plt_pixel)
+
+    display(plt_oe_vs_time)
 end
 
 function cb(os)
@@ -257,15 +303,16 @@ mass_didymos = 5.32*10^11
 global mass_dimorphos = 4.94*10^11
 global mu_system = G*(mass_didymos+mass_dimorphos)
 global c = 3.0*10^8
+global enable_perturbation = true
 
 # Time properties
 hour = 3600.0
 number_of_steps = 1000
 global start_time = 0.0
-global end_time = 200*hour
+global end_time = 13*hour
 global step_size = (end_time-start_time)/number_of_steps
 global spice_start_time = utc2et("2027-02-25T08:14:58")
-
+global flux = 1358
 
 main()
 
