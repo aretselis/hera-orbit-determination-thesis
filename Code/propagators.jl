@@ -120,23 +120,35 @@ end
 
 function fv_x(x, y, z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
     # Assuming v_x'(t)=-mu*x/(sqrt(x^2+y^2+z^2))^3 + flux term
-    perturbation = Int64(perturbation)
-    shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
-    return -mu*x/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(x-x_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
+    if perturbation == false
+        return -mu*x/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3))
+    else
+        perturbation = Int64(perturbation)
+        shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
+        return -mu*x/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(x-x_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
+    end
 end
 
 
 function fv_y(x, y, z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
     # Assuming v_y'(t)=-mu*y/(sqrt(x^2+y^2+z^2))^3 + flux term
-    perturbation = Int64(perturbation)
-    shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
-    return -mu*y/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(y-y_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
+    if perturbation == false
+        return -mu*y/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3))
+    else
+        perturbation = Int64(perturbation)
+        shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
+        return -mu*y/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(y-y_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
+    end
 end
 
 
 function fv_z(x, y, z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
     # Assuming v_z'(t)=-mu*z/(sqrt(x^2+y^2+z^2))^3 + flux term
-    perturbation = Int64(perturbation)
-    shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
-    return -mu*z/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(z-z_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
+    if perturbation == false 
+        return -mu*z/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3))
+    else
+        perturbation = Int64(perturbation)
+        shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
+        return -mu*z/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(z-z_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
+    end
 end
