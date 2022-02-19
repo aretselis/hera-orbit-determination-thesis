@@ -1,4 +1,4 @@
-function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step)
+function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step, perturbation, A, c_p)
     #=
     # 4th order Runge-Kutta orbit propagator assuming n no perturbations
     =#
@@ -21,16 +21,22 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
     vzn[1] = vz_0
     counter = 1
 
-    println("\nPropagating:")
-    iter = ProgressBar(t_start:step:t_end-step)
+    #println("\nPropagating:")
+    iter = (t_start:step:t_end-step)
     for i in iter
+        # Calculate sun position 
+        spice_time = spice_start_time + tn[counter]
+        sun_vector = spkpos("SUN", spice_time, "J2000", "none", "2065803")[1]
+        x_sun = sun_vector[1] * 1000
+        y_sun = sun_vector[2] * 1000
+        z_sun = sun_vector[3] * 1000
         # Calculate k1 values
         k1_x = fx(vx_0)
         k1_y = fy(vy_0)
         k1_z = fz(vz_0)
-        k1_vx = fv_x(x_0, y_0, z_0, mu)
-        k1_vy = fv_y(x_0, y_0, z_0, mu)
-        k1_vz = fv_z(x_0, y_0, z_0, mu)
+        k1_vx = fv_x(x_0, y_0, z_0, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k1_vy = fv_y(x_0, y_0, z_0, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k1_vz = fv_z(x_0, y_0, z_0, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
         # Calculate midpoint values
         mid_x = x_0 + k1_x * step/2
         mid_y = y_0 + k1_y * step/2
@@ -42,9 +48,9 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
         k2_x = fx(mid_vx)
         k2_y = fy(mid_vy)
         k2_z = fz(mid_vz)
-        k2_vx = fv_x(mid_x, mid_y, mid_z, mu)
-        k2_vy = fv_y(mid_x, mid_y, mid_z, mu)
-        k2_vz = fv_z(mid_x, mid_y, mid_z, mu)
+        k2_vx = fv_x(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k2_vy = fv_y(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k2_vz = fv_z(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
         # Calculate next midpoint values
         mid_x = x_0 + k2_x * step / 2
         mid_y = y_0 + k2_y * step / 2
@@ -56,9 +62,9 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
         k3_x = fx(mid_vx)
         k3_y = fy(mid_vy)
         k3_z = fz(mid_vz)
-        k3_vx = fv_x(mid_x, mid_y, mid_z, mu)
-        k3_vy = fv_y(mid_x, mid_y, mid_z, mu)
-        k3_vz = fv_z(mid_x, mid_y, mid_z, mu)
+        k3_vx = fv_x(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k3_vy = fv_y(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k3_vz = fv_z(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
         # Calculate next midpoint values
         mid_x = x_0 + k3_x * step
         mid_y = y_0 + k3_y * step
@@ -70,9 +76,9 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
         k4_x = fx(mid_vx)
         k4_y = fy(mid_vy)
         k4_z = fz(mid_vz)
-        k4_vx = fv_x(mid_x, mid_y, mid_z, mu)
-        k4_vy = fv_y(mid_x, mid_y, mid_z, mu)
-        k4_vz = fv_z(mid_x, mid_y, mid_z, mu)
+        k4_vx = fv_x(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k4_vy = fv_y(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+        k4_vz = fv_z(mid_x, mid_y, mid_z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
         # Compute r, v values and append to list
         xn[counter + 1] = xn[counter] + (step / 6) * (k1_x + 2 * k2_x + 2 * k3_x + k4_x)
         yn[counter + 1] = yn[counter] + (step / 6) * (k1_y + 2 * k2_y + 2 * k3_y + k4_y)
@@ -96,35 +102,41 @@ end
 
 function fx(v_x)
     # Assuming x'(t)=v_x
-    v_x
+    return v_x
 end
 
 
 function fy(v_y)
     # Assuming y'(t)=v_y
-    v_y
+    return v_y
 end
 
 
 function fz(v_z)
     # Assuming z'(t)=v_z
-    v_z
+    return v_z
 end
 
 
-function fv_x(x, y, z, mu)
-    # Assuming v_x'(t)=-mu*x/(sqrt(x^2+y^2+z^2))^3
-    -mu*x/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3))
+function fv_x(x, y, z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+    # Assuming v_x'(t)=-mu*x/(sqrt(x^2+y^2+z^2))^3 + flux term
+    perturbation = Int64(perturbation)
+    shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
+    return -mu*x/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(x-x_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
 end
 
 
-function fv_y(x, y, z, mu)
-    # Assuming v_y'(t)=-mu*y/(sqrt(x^2+y^2+z^2))^3
-    -mu*y/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3))
+function fv_y(x, y, z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+    # Assuming v_y'(t)=-mu*y/(sqrt(x^2+y^2+z^2))^3 + flux term
+    perturbation = Int64(perturbation)
+    shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
+    return -mu*y/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(y-y_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
 end
 
 
-function fv_z(x, y, z, mu)
-    # Assuming v_z'(t)=-mu*z/(sqrt(x^2+y^2+z^2))^3
-    -mu*z/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3))
+function fv_z(x, y, z, mu, x_sun, y_sun, z_sun, perturbation, A, c_p)
+    # Assuming v_z'(t)=-mu*z/(sqrt(x^2+y^2+z^2))^3 + flux term
+    perturbation = Int64(perturbation)
+    shadow = geometrical_shadow_check(x, y, z, x_sun, y_sun, z_sun)
+    return -mu*z/(^(^(^(x, 2) + ^(y, 2) + ^(z, 2), 1/2), 3)) + ((perturbation*shadow*flux*A*c_p*(z-z_sun))/(c*mass_dimorphos*sqrt((x-x_sun)^2 + (y-y_sun)^2 + (z-z_sun)^2)))
 end
