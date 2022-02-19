@@ -179,6 +179,33 @@ function orbit_evolution_and_cartesian_transform(a, e, i, n, po, tau, GM, time)
 end
 
 
+function sight_algorithm(r1_vector, r2_vector)
+    #=
+    Computes if there is sight between two points in space (assuming Didymos to be the obstuction)
+    INPUT:
+    r1_vector, Vector(Float64, 3), position vector of the first point in [km]
+    r2_vector, Vector(Float64, 3), position vector of the second point in [km]
+    OUTPUT:
+    0, if there is no line of sight between the two points
+    1, if there is line of sight between the two points
+    =#
+    radius_didymos = 0.8 # [km]
+    r1_magnitude = sqrt(r1_vector[1]^2 + r1_vector[2]^2 + r1_vector[3]^2)
+    r2_magnitude = sqrt(r2_vector[1]^2 + r2_vector[2]^2 + r2_vector[3]^2)
+    tau_min = (r1_magnitude^2 - dot(r1_vector, r2_vector))/(r1_magnitude^2 + r2_magnitude^2 - (2*dot(r1_vector, r2_vector)))
+    line_of_sight = false
+    if tau_min < 0 || tau_min > 1
+        line_of_sight = true
+    else
+        parametric_tau_min = ((1-tau_min)*r1_magnitude^2) + (dot(r1_vector, r2_vector)*tau_min)
+        if parametric_tau_min >= radius_didymos
+            line_of_sight = true
+        end
+    end
+    return Int64(line_of_sight)
+end 
+
+
 function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time)
     # Compute initial position and velocity vector from orbital elements
     r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
