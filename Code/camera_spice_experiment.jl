@@ -5,6 +5,7 @@ include("spice_utilities.jl")
 include("camera_utilities.jl")
 include("optimization.jl")
 include("results.jl")
+include("plotting.jl")
 
 
 function load_hera_spice_kernels()
@@ -81,25 +82,6 @@ function main()
     vz_dimorphos = vz_dimorphos[1:10:end]
     t_vector = t_vector[1:10:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
-
-    # Compute orbital elements vs time for the original orbit
-    a_vector = zeros(Float64, number_of_steps + 1)
-    e_vector = zeros(Float64, number_of_steps + 1)
-    i_vector = zeros(Float64, number_of_steps + 1)
-    Omega_vector = zeros(Float64, number_of_steps + 1)
-    omega_vector = zeros(Float64, number_of_steps + 1)
-    M_vector = zeros(Float64, number_of_steps + 1)
-    for i in 1:(number_of_steps+1)
-        a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
-    end
-
-    plotlyjs()
-    plt_oe_vs_time = plot(t_vector, a_vector, label= "a(t)")
-    #scatter!(t_vector, e_vector, label= "e(t)")
-    #scatter!(t_vector, i_vector, label= "i(t)")
-    #scatter!(t_vector, Omega_vector, label= "Omega(t)")
-    #scatter!(t_vector, omega_vector, label= "omega(t)")
-    #scatter!(t_vector, M_vector, label= "M(t)")
 
     # Orbit start and end time (for SPICE)
     spice_end_time = spice_start_time + end_time
@@ -208,7 +190,7 @@ function main()
     initial_guess = [1200.0, 0.0001, 4.0, 5.0, 3.0, 7.0]
 
     # Minimize square mean error to find best orbital elements
-    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 50), Optim.Options(iterations = 150, g_tol = 1e-10, show_trace = true))
+    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 50), Optim.Options(iterations = 200, g_tol = 1e-10, show_trace = true))
     print(res)
     println(Optim.minimizer(res))
 
@@ -220,47 +202,10 @@ function main()
     omega_final = Optim.minimizer(res)[5]
     M_final = Optim.minimizer(res)[6]
 
-    # Compute initial position and velocity vector from orbital elements
-    r_vector, v_vector = orbital_elements_to_cartesian(a_final, e_final, i_final, Omega_final, omega_final, M_final, mu_system)
-    x = r_vector[1]
-    y = r_vector[2]
-    z = r_vector[3]
-    vx = v_vector[1]
-    vy = v_vector[2]
-    vz = v_vector[3]
-
-    # Propagate Dimorphos
-    propagation_steps = 10000
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
-    # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
-    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
-
-    # Compute orbital elements vs time for the original orbit
-    a_vector = zeros(Float64, number_of_steps + 1)
-    e_vector = zeros(Float64, number_of_steps + 1)
-    i_vector = zeros(Float64, number_of_steps + 1)
-    Omega_vector = zeros(Float64, number_of_steps + 1)
-    omega_vector = zeros(Float64, number_of_steps + 1)
-    M_vector = zeros(Float64, number_of_steps + 1)
-    for i in 1:(number_of_steps+1)
-        a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
-    end
-
-    # plotlyjs()
-    #plt_oe_vs_time = plot(t_vector, a_vector, label= "a(t)")
-    plot!(t_vector, a_vector, label= "a(t) (fit)")
-    #scatter!(t_vector, i_vector, label= "i(t)")
-    #scatter!(t_vector, Omega_vector, label= "Omega(t)")
-    #scatter!(t_vector, omega_vector, label= "omega(t)")
-    #scatter!(t_vector, M_vector, label= "M(t)")
+    # Save orbital elements plots vs time
+    original_orbital_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
+    fitted_orbital_elements = [a_final, e_final, i_final, Omega_final, omega_final, M_final]
+    propagate_and_plot_orbital_elements_vs_time(original_orbital_elements, fitted_orbital_elements)
 
     # Compute percentage error of the predicted orbit relative to the initial orbit 
     initial_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
@@ -287,7 +232,7 @@ function main()
     scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
     scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
 
-    display(plt_oe_vs_time)
+    display(plt_pixel)
 end
 
 function cb(os)
@@ -309,7 +254,7 @@ global enable_perturbation = true
 hour = 3600.0
 number_of_steps = 1000
 global start_time = 0.0
-global end_time = 13*hour
+global end_time = 200*hour
 global step_size = (end_time-start_time)/number_of_steps
 global spice_start_time = utc2et("2027-02-25T08:14:58")
 global flux = 1358
