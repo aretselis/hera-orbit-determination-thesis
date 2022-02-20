@@ -41,15 +41,15 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
      Omega_vector = zeros(Float64, number_of_steps + 1)
      omega_vector = zeros(Float64, number_of_steps + 1)
      M_vector = zeros(Float64, number_of_steps + 1)
-     for i in 1:(number_of_steps+1)
-         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
-     end
+    for i in 1:(number_of_steps+1)
+        a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
+    end
 
     plt_a_vs_time = plot(t_vector, a_vector, label= "a(t) original", xlabel = "Time, t, [seconds]", ylabel = "Semi-major axis, a, [m]")
     plt_e_vs_time = plot(t_vector, e_vector, label= "e(t)", xlabel = "Time, t, [seconds]", ylabel = "Eccentricity, e, []")
     plt_i_vs_time = plot(t_vector, i_vector, label= "i(t)", xlabel = "Time, t, [seconds]", ylabel = "Inclination, i, [deg]")
     plt_Omega_vs_time = plot(t_vector, Omega_vector, label= "Omega(t)", xlabel = "Time, t, [seconds]", ylabel = "Longitude of the ascending node, Omega, [deg]")
-    plt_omega_vs_time = plot(t_vector, omega_vector, label= "omega(t)", xlabel = "Time, t, [seconds]", ylabel = "Argument of periapsis, omega, [deg]")
+    plt_periapsis_vs_time = plot(t_vector, omega_vector, label= "omega(t)", xlabel = "Time, t, [seconds]", ylabel = "Argument of periapsis, omega, [deg]")
     plt_M_vs_time = plot(t_vector, M_vector, label= "M(t)", xlabel = "Time, t, [seconds]", ylabel = "Mean anomaly, M, [deg]")
 
     # Extract final guess from optimization
@@ -98,14 +98,14 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
     plot!(plt_e_vs_time, t_vector, e_vector, label= "e(t) Prediction")
     plot!(plt_i_vs_time, t_vector, i_vector, label= "i(t) Prediction")
     plot!(plt_Omega_vs_time, t_vector, Omega_vector, label= "Omega(t) Prediction")
-    plot!(plt_omega_vs_time, t_vector, omega_vector, label= "omega(t) Prediction")
+    plot!(plt_periapsis_vs_time, t_vector, omega_vector, label= "omega(t) Prediction")
     plot!(plt_M_vs_time, t_vector, M_vector, label= "M(t) Prediction")
 
     savefig(plt_a_vs_time, ".\\Results\\a_vs_time.pdf")
     savefig(plt_e_vs_time, ".\\Results\\e_vs_time.pdf")
     savefig(plt_i_vs_time, ".\\Results\\i_vs_time.pdf")
     savefig(plt_Omega_vs_time, ".\\Results\\Omega_vs_time.pdf")
-    savefig(plt_omega_vs_time, ".\\Results\\omega_vs_time.pdf")
+    savefig(plt_periapsis_vs_time, ".\\Results\\periapsis_vs_time.pdf")
     savefig(plt_M_vs_time, ".\\Results\\M_vs_time.pdf")
     return Nothing
 end
