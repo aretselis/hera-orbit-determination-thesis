@@ -105,55 +105,32 @@ function cartesian_to_orbital_elements(r_vector, v_vector, mu)
     v = sqrt(v_vector[1]^2 + v_vector[2]^2 + v_vector[3]^2)
     h_vector = cross(r_vector, v_vector)
     h = sqrt(h_vector[1]^2 + h_vector[2]^2 + h_vector[3]^2)
-    # Compute a, e and i 
-    a = mu/((2*mu/r) - v^2)
-    e = sqrt(1 - ((h^2)/(mu*a)))
+    n_vector = cross([0,0,1], h_vector)
+    n = sqrt(n_vector[1]^2 + n_vector[2]^2 + n_vector[3]^2)
+    e_vector = (((v^2 - (mu/r))*r_vector) - (dot(r_vector,v_vector)*v_vector))/mu
+    e = sqrt(e_vector[1]^2 + e_vector[2]^2 + e_vector[3]^2)
+    ksi = ((v^2)/2) - (mu/r)
+    a = - mu/(2*ksi)
     i = acos(h_vector[3]/h)
-    # Compute Omega (Longitude of the ascending node)
-    if h_vector[3] > 0
-        sin_Omega =   h_vector[1] / (h * sin(i))
-        cos_Omega = - h_vector[2] / (h * sin(i))
-    else
-        sin_Omega = - h_vector[1] / (h * sin(i))
-        cos_Omega =   h_vector[2] / (h * sin(i))
+    Omega = acos(n_vector[1]/n)
+    if n_vector[2] < 0
+        Omega = 2*pi - Omega
     end
-    if sin_Omega >= 0
-        Omega = acos(cos_Omega)
-    else
-        Omega = 2*pi - acos(cos_Omega)
+    omega = acos(dot(n_vector, e_vector)/(n*e))
+    if e_vector[3] < 0
+        omega = 2*pi - omega
     end
-    # Compute E 
-    cos_E = (a-r)/(a*e)
-    sin_E = dot(r_vector, v_vector) / (e*sqrt(mu*a))
-    # Compute true anomaly
-    cos_ni = (cos_E - e) / (1 - (e*cos_E))
-    sin_ni = (sqrt(1 - e^2) * sin_E) / (1 - (e * cos_E))
-    if sin_ni >=0
-        ni = acos(cos_ni)
-    else
-        ni = 2*pi - acos(cos_ni)
+    ni = acos(dot(e_vector, r_vector)/(e*r))
+    if dot(r_vector, v_vector) < 0
+        ni = 2*pi - ni
     end
-    # Compute mean anomaly
-    if sin_E >=0
-        E = acos(cos_E)
-    else
-        E = 2*pi - acos(cos_E)
-    end
-    M = E - e*sin_E
-    # Compute omega (argument of pericenter)
-    sin_omega_plus_ni = r_vector[3] / (r*sin(i))
-    cos_omega_plus_ni = ((r_vector[1]*cos_Omega) + (r_vector[2]*sin_Omega))/r
-    if sin_omega_plus_ni >=0
-        omega = acos(cos_omega_plus_ni) - ni
-    else
-        omega = 2*pi - acos(cos_omega_plus_ni) - ni
-    end
+    M = atan((sqrt(1-e^2)*sin(ni)/(1+e*cos(ni))), (e+cos(ni))/(1+e*cos(ni))) - (e*(sqrt(1-e^2)*sin(ni)/(1+e*cos(ni))))  
     # Convert to degrees
     i = rad2deg(i)
     Omega = rad2deg(Omega)
     ni = rad2deg(ni)
-    M = rad2deg(M)
     omega = rad2deg(omega)
+    M = rad2deg(M)
     return a, e, i, Omega, omega, M
 end
 
