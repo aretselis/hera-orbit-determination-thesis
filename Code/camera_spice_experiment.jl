@@ -50,11 +50,11 @@ end
 function main()
     # Dimorphos orbit
     a_dimorphos = 1183.725 # Semi-major axis
-    e_dimorphos = 0.00039 # Eccentricity
-    i_dimorphos = 6.9 # Inclination
+    e_dimorphos = 0.000075 # Eccentricity
+    i_dimorphos = 6.93 # Inclination
     Omega_dimorphos = 7.2 # Argument of periapsis
     omega_dimorphos = 5.8 # Longitude of the ascending node
-    M_dimorphos = 3.85 # Mean anomaly
+    M_dimorphos = 27.35 # Mean anomaly
 
     # Dimorphos properties
     area_dimorphos = 2*pi*85.0^2
@@ -158,7 +158,8 @@ function main()
         end
     end
 
-    # Plot 3D image for reference    
+    # Plot 3D image for reference
+    plotlyjs()    
     x_didymos, y_didymos, z_didymos = didymos_coordinates[:, 1], didymos_coordinates[:, 2], didymos_coordinates[:, 3]
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
     #plt_3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
@@ -184,16 +185,61 @@ function main()
     global x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
 
-    # Bounds for optimization
-    lower = [1190.0-30, 0.0, 0.0, 0.0, 1.0, 0.0]
-    upper = [1190.0+30, 0.001, 10.0, 10.0, 10.0, 10.0]
-    initial_guess = [1200.0, 0.0001, 4.0, 5.0, 3.0, 7.0]
-
     # Minimize square mean error to find best orbital elements
-    global res = optimize(residuals, initial_guess, ParticleSwarm(; lower, upper, n_particles = 50), Optim.Options(iterations = 200, g_tol = 1e-10, show_trace = true))
-    print(res)
-    println(Optim.minimizer(res))
+    # Bounds for optimization
+    lower = [1190.0-30, 0.0000001, 0.0, 0.0, 1.0, 27.4]
+    upper = [1190.0+30, 0.0001, 10.0, 10.0, 10.0, 28.9]
+    global initial_guess = [1200.0, 0.000039, 4.0, 5.0, 3.0, 27.6]
 
+    # Fit mean anomaly
+    global fit_mask = [false, false, false, false, false, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    initial_guess[6] = Optim.minimizer(res)[6]
+
+    # Fit argument of pericenter
+    fit_mask = [false, false, false, false, true, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    initial_guess[5] = Optim.minimizer(res)[5]
+    initial_guess[6] = Optim.minimizer(res)[6]
+
+    # Fit semi-major axis
+    fit_mask = [true, false, false, false, true, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    initial_guess[1] = Optim.minimizer(res)[1]
+    initial_guess[5] = Optim.minimizer(res)[5]
+    initial_guess[6] = Optim.minimizer(res)[6]
+
+    # Fit eccentricity
+    fit_mask = [true, true, false, false, true, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    initial_guess[1] = Optim.minimizer(res)[1]
+    initial_guess[2] = Optim.minimizer(res)[2]
+    initial_guess[5] = Optim.minimizer(res)[5]
+    initial_guess[6] = Optim.minimizer(res)[6]
+
+    # Fit inclination
+    fit_mask = [true, true, true, false, true, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    initial_guess[1] = Optim.minimizer(res)[1]
+    initial_guess[2] = Optim.minimizer(res)[2]
+    initial_guess[3] = Optim.minimizer(res)[3]
+    initial_guess[5] = Optim.minimizer(res)[5]
+    initial_guess[6] = Optim.minimizer(res)[6]
+
+    # Fit longitude of the ascending node
+    fit_mask = [true, true, true, true, true, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    initial_guess[1] = Optim.minimizer(res)[1]
+    initial_guess[2] = Optim.minimizer(res)[2]
+    initial_guess[3] = Optim.minimizer(res)[3]
+    initial_guess[4] = Optim.minimizer(res)[4]
+    initial_guess[5] = Optim.minimizer(res)[5]
+    initial_guess[6] = Optim.minimizer(res)[6]
+
+    # Perform a final fit 
+    fit_mask = [true, true, true, true, true, true]
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+        
     # Extract final guess from optimization
     a_final = Optim.minimizer(res)[1]
     e_final = Optim.minimizer(res)[2]
@@ -201,7 +247,7 @@ function main()
     Omega_final = Optim.minimizer(res)[4]
     omega_final = Optim.minimizer(res)[5]
     M_final = Optim.minimizer(res)[6]
-
+    
     # Save orbital elements plots vs time
     original_orbital_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
     fitted_orbital_elements = [a_final, e_final, i_final, Omega_final, omega_final, M_final]
