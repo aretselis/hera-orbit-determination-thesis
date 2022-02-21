@@ -219,7 +219,6 @@ function geometrical_shadow_check(x_dimorphos, y_dimorphos, z_dimorphos, x_sun, 
         end
     end
     return shadow
-
 end
 
 
@@ -233,14 +232,10 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     vy = v_vector[2]
     vz = v_vector[3]
 
-    # Dimorphos properties
-    area_dimorphos = 2*pi*85.0^2
-    c_p = 2.2
-
     # Propagate Dimorphos
     propagation_steps = 10000
     propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation)
     # Select every 10th element to match the photos
     x_dimorphos = x_dimorphos[1:10:end]
     y_dimorphos = y_dimorphos[1:10:end]
@@ -331,14 +326,10 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     vy = v_vector[2]
     vz = v_vector[3]
 
-    # Dimorphos properties
-    area_dimorphos = 2*pi*85.0^2
-    c_p = 2.2
-
     # Propagate Dimorphos
     propagation_steps = 10000
     propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation)
     # Select every 10th element to match the photos
     x_dimorphos = x_dimorphos[1:10:end]
     y_dimorphos = y_dimorphos[1:10:end]
