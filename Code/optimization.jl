@@ -5,6 +5,10 @@ function residuals(orbit)
             orbit[i] = initial_guess[i]
         end
     end
+    # Force positive eccentricity 
+    if orbit[3] < 0.0
+        orbit[3] = -1 * orbit[3]
+    end
     # Select elements
     a = orbit[1]
     e = orbit[2]
