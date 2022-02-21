@@ -193,25 +193,25 @@ function main()
 
     # Fit mean anomaly
     global fit_mask = [false, false, false, false, false, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
     initial_guess[6] = Optim.minimizer(res)[6]
 
     # Fit argument of pericenter
     fit_mask = [false, false, false, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
     initial_guess[5] = Optim.minimizer(res)[5]
     initial_guess[6] = Optim.minimizer(res)[6]
 
     # Fit semi-major axis
     fit_mask = [true, false, false, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
     initial_guess[1] = Optim.minimizer(res)[1]
     initial_guess[5] = Optim.minimizer(res)[5]
     initial_guess[6] = Optim.minimizer(res)[6]
 
     # Fit eccentricity
     fit_mask = [true, true, false, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
     initial_guess[1] = Optim.minimizer(res)[1]
     initial_guess[2] = Optim.minimizer(res)[2]
     initial_guess[5] = Optim.minimizer(res)[5]
@@ -219,7 +219,7 @@ function main()
 
     # Fit inclination
     fit_mask = [true, true, true, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
     initial_guess[1] = Optim.minimizer(res)[1]
     initial_guess[2] = Optim.minimizer(res)[2]
     initial_guess[3] = Optim.minimizer(res)[3]
@@ -228,7 +228,7 @@ function main()
 
     # Fit longitude of the ascending node
     fit_mask = [true, true, true, true, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
     initial_guess[1] = Optim.minimizer(res)[1]
     initial_guess[2] = Optim.minimizer(res)[2]
     initial_guess[3] = Optim.minimizer(res)[3]
@@ -238,7 +238,7 @@ function main()
 
     # Perform a final fit 
     fit_mask = [true, true, true, true, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, g_tol = 1e-10, show_trace = true, extended_trace = true))
+    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
         
     # Extract final guess from optimization
     a_final = Optim.minimizer(res)[1]
@@ -304,6 +304,9 @@ global end_time = 200*hour
 global step_size = (end_time-start_time)/number_of_steps
 global spice_start_time = utc2et("2027-02-25T08:14:58")
 global flux = 1358
+
+# Errors definition
+global error_centroid_pixels = 5
 
 main()
 

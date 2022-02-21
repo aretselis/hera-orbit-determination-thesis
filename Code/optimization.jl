@@ -24,7 +24,7 @@ function sum_of_squared_residuals(observed_x, observed_y, predicted_x, predicted
     typeof(predicted_y)
     x_residuals = observed_x - predicted_x
     y_residuals = observed_y - predicted_y
-    squared_sum = sum(x_residuals.^2) + sum(y_residuals.^2)
+    squared_sum = sum((x_residuals.^2)/error_centroid_pixels^2) + sum((y_residuals.^2)/error_centroid_pixels)
     return squared_sum
 end
 
