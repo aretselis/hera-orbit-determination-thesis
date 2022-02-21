@@ -50,10 +50,10 @@ end
 function main()
     # Dimorphos orbit
     a_dimorphos = 1183.725 # Semi-major axis
-    e_dimorphos = 0.000087 # Eccentricity
+    e_dimorphos = 0.000029 # Eccentricity
     i_dimorphos = 6.93 # Inclination
     Omega_dimorphos = 7.2 # Argument of periapsis
-    omega_dimorphos = 5.8 # Longitude of the ascending node
+    omega_dimorphos = 12.6 # Longitude of the ascending node
     M_dimorphos = 27.35 # Mean anomaly
 
     # Dimorphos properties
@@ -182,8 +182,12 @@ function main()
 
     # Compute coordinates in pixels
     x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
-    global x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+    global x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
+
+    # Add centroid pixel error
+    x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
+    y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
 
     # Minimize square mean error to find best orbital elements
     # Bounds for optimization
@@ -306,7 +310,10 @@ global spice_start_time = utc2et("2027-02-25T08:14:58")
 global flux = 1358
 
 # Errors definition
-global error_centroid_pixels = 5 # [pixels]
+pixel_error = 2
+pixel_error_distribution = Uniform(0.0, pixel_error)
+global x_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
+global y_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
 global error_barycenter = 10/1000 # [km]
 global barycenter_error_distribution = Normal(0.0, error_barycenter)
 
