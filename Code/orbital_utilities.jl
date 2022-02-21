@@ -313,6 +313,10 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
 
     x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
 
+    # Add centroid pixel error
+    x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
+    y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
+
     return x_pixel_dimorphos, y_pixel_dimorphos
 end
 
