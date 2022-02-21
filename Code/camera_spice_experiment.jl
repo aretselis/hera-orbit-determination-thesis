@@ -1,4 +1,4 @@
-using SPICE, ProgressBars, Plots, LinearAlgebra, Optim
+using SPICE, ProgressBars, Plots, LinearAlgebra, Optim, Distributions, Random
 include("orbital_utilities.jl")
 include("propagators.jl")
 include("spice_utilities.jl")
@@ -50,7 +50,7 @@ end
 function main()
     # Dimorphos orbit
     a_dimorphos = 1183.725 # Semi-major axis
-    e_dimorphos = 0.000075 # Eccentricity
+    e_dimorphos = 0.000087 # Eccentricity
     i_dimorphos = 6.93 # Inclination
     Omega_dimorphos = 7.2 # Argument of periapsis
     omega_dimorphos = 5.8 # Longitude of the ascending node
@@ -113,7 +113,7 @@ function main()
         # Get didymos reference position or translate hera_coordinates
         if iteration == 1
             for j in 1:3
-                barycenter_initial_coordinates[j] = position_system_barycenter[j]
+                barycenter_initial_coordinates[j] = position_system_barycenter[j] + rand(barycenter_error_distribution)
             end
         else
             for j in 1:3
@@ -306,7 +306,9 @@ global spice_start_time = utc2et("2027-02-25T08:14:58")
 global flux = 1358
 
 # Errors definition
-global error_centroid_pixels = 5
+global error_centroid_pixels = 5 # [pixels]
+global error_barycenter = 10/1000 # [km]
+global barycenter_error_distribution = Normal(0.0, error_barycenter)
 
 main()
 
