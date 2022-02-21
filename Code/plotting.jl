@@ -21,27 +21,19 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
     vz = v_vector[3]
 
      # Propagate Dimorphos
-     propagation_steps = 10000
+     propagation_steps = 100000
      propagation_step_size = (end_time-start_time)/propagation_steps
      x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
-     # Select every 10th element to match the photos
-     x_dimorphos = x_dimorphos[1:10:end]
-     y_dimorphos = y_dimorphos[1:10:end]
-     z_dimorphos = z_dimorphos[1:10:end]
-     vx_dimorphos = vx_dimorphos[1:10:end]
-     vy_dimorphos = vy_dimorphos[1:10:end]
-     vz_dimorphos = vz_dimorphos[1:10:end]
-     t_vector = t_vector[1:10:end]
      dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
  
      # Compute orbital elements vs time for the original orbit
-     a_vector = zeros(Float64, number_of_steps + 1)
-     e_vector = zeros(Float64, number_of_steps + 1)
-     i_vector = zeros(Float64, number_of_steps + 1)
-     Omega_vector = zeros(Float64, number_of_steps + 1)
-     omega_vector = zeros(Float64, number_of_steps + 1)
-     M_vector = zeros(Float64, number_of_steps + 1)
-    for i in 1:(number_of_steps+1)
+     a_vector = zeros(Float64, propagation_steps + 1)
+     e_vector = zeros(Float64, propagation_steps + 1)
+     i_vector = zeros(Float64, propagation_steps + 1)
+     Omega_vector = zeros(Float64, propagation_steps + 1)
+     omega_vector = zeros(Float64, propagation_steps + 1)
+     M_vector = zeros(Float64, propagation_steps + 1)
+    for i in 1:(propagation_steps+1)
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
     end
 
@@ -70,27 +62,20 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    propagation_steps = 10000
+    propagation_steps = 100000
     propagation_step_size = (end_time-start_time)/propagation_steps
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
     # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Compute orbital elements vs time for the fitted orbit
-    a_vector = zeros(Float64, number_of_steps + 1)
-    e_vector = zeros(Float64, number_of_steps + 1)
-    i_vector = zeros(Float64, number_of_steps + 1)
-    Omega_vector = zeros(Float64, number_of_steps + 1)
-    omega_vector = zeros(Float64, number_of_steps + 1)
-    M_vector = zeros(Float64, number_of_steps + 1)
-    for i in 1:(number_of_steps+1)
+    a_vector = zeros(Float64, propagation_steps + 1)
+    e_vector = zeros(Float64, propagation_steps + 1)
+    i_vector = zeros(Float64, propagation_steps + 1)
+    Omega_vector = zeros(Float64, propagation_steps + 1)
+    omega_vector = zeros(Float64, propagation_steps + 1)
+    M_vector = zeros(Float64, propagation_steps + 1)
+    for i in 1:(propagation_steps+1)
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
     end
 
