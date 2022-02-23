@@ -233,31 +233,30 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    propagation_steps = 10000
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation)
-    # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    # Select every xth element to match the photos taken
+    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
+    x_dimorphos = x_dimorphos[1:photo_selector:end]
+    y_dimorphos = y_dimorphos[1:photo_selector:end]
+    z_dimorphos = z_dimorphos[1:photo_selector:end]
+    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
+    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
+    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
+    t_vector = t_vector[1:photo_selector:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
     spice_end_time = spice_start_time + end_time
 
     # Initialize position arrays (x, y, z)
-    didymos_coordinates = zeros(Float64, number_of_steps + 1, 3)
-    barycenter_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    didymos_coordinates = zeros(Float64, total_photos, 3)
+    barycenter_coordinates = zeros(Float64, total_photos, 3)
     barycenter_offset = zeros(Float64, 3)
     barycenter_initial_coordinates = zeros(Float64, 3)
-    camera_position_didymos = zeros(Float64, number_of_steps + 1, 3)
-    camera_position_dimorphos = zeros(Float64, number_of_steps + 1, 3)
-    didymos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
-    dimorphos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+    camera_position_didymos = zeros(Float64, total_photos, 3)
+    camera_position_dimorphos = zeros(Float64, total_photos, 3)
+    didymos_pixel_coordinates = zeros(Float64, total_photos, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, total_photos, 2)
 
     # HERA_AFC-1 coordinate system unit vectors
     e_x = [1.0, 0.0, 0.0]
@@ -267,8 +266,8 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     # Main SPICE calculations loop
     focal_length = 10.6*10^-5 # [km]
     iteration = 1
-    #println("\nSPICE calculations:")
-    for i in (spice_start_time:step_size:spice_end_time)
+    for current_time in LinRange(start_time, end_time, total_photos)
+        i = spice_start_time + current_time
         position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
         position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
         rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
@@ -327,31 +326,30 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    propagation_steps = 10000
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation)
-    # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    # Select every xth element to match the photos taken
+    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
+    x_dimorphos = x_dimorphos[1:photo_selector:end]
+    y_dimorphos = y_dimorphos[1:photo_selector:end]
+    z_dimorphos = z_dimorphos[1:photo_selector:end]
+    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
+    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
+    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
+    t_vector = t_vector[1:photo_selector:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
     spice_end_time = spice_start_time + end_time
 
     # Initialize position arrays (x, y, z)
-    didymos_coordinates = zeros(Float64, number_of_steps + 1, 3)
-    barycenter_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    didymos_coordinates = zeros(Float64, total_photos, 3)
+    barycenter_coordinates = zeros(Float64, total_photos, 3)
     barycenter_offset = zeros(Float64, 3)
     barycenter_initial_coordinates = zeros(Float64, 3)
-    camera_position_didymos = zeros(Float64, number_of_steps + 1, 3)
-    camera_position_dimorphos = zeros(Float64, number_of_steps + 1, 3)
-    didymos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
-    dimorphos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+    camera_position_didymos = zeros(Float64, total_photos, 3)
+    camera_position_dimorphos = zeros(Float64, total_photos, 3)
+    didymos_pixel_coordinates = zeros(Float64, total_photos, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, total_photos, 2)
 
     # HERA_AFC-1 coordinate system unit vectors
     e_x = [1.0, 0.0, 0.0]
@@ -361,8 +359,8 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     # Main SPICE calculations loop
     focal_length = 10.6*10^-5 # [km]
     iteration = 1
-    #println("\nSPICE calculations:")
-    for i in (spice_start_time:step_size:spice_end_time)
+    for current_time in LinRange(start_time, end_time, total_photos)
+        i = spice_start_time + current_time
         position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
         position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
         rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
