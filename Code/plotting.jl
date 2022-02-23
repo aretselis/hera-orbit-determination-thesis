@@ -7,10 +7,6 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
     omega_dimorphos = OE_original[5] # Longitude of the ascending node
     M_dimorphos = OE_original[6] # Mean anomaly
 
-    # Dimorphos properties
-    area_dimorphos = 2*pi*85.0^2
-    c_p = 2.2
-
     # Compute initial position and velocity vector from orbital elements
     r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
     x = r_vector[1]
@@ -20,20 +16,19 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
     vy = v_vector[2]
     vz = v_vector[3]
 
-     # Propagate Dimorphos
-     propagation_steps = 100000
-     propagation_step_size = (end_time-start_time)/propagation_steps
-     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
-     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+    # Propagate Dimorphos
+    propagation_steps = 100000
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_steps, enable_perturbation)
  
-     # Compute orbital elements vs time for the original orbit
-     a_vector = zeros(Float64, propagation_steps + 1)
-     e_vector = zeros(Float64, propagation_steps + 1)
-     i_vector = zeros(Float64, propagation_steps + 1)
-     Omega_vector = zeros(Float64, propagation_steps + 1)
-     omega_vector = zeros(Float64, propagation_steps + 1)
-     M_vector = zeros(Float64, propagation_steps + 1)
-    for i in 1:(propagation_steps+1)
+    # Compute orbital elements vs time for the original orbit
+    vector_size = size(x_dimorphos)[1]
+    a_vector = zeros(Float64, vector_size)
+    e_vector = zeros(Float64, vector_size)
+    i_vector = zeros(Float64, vector_size)
+    Omega_vector = zeros(Float64, vector_size)
+    omega_vector = zeros(Float64, vector_size)
+    M_vector = zeros(Float64, vector_size)
+    for i in 1:vector_size
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
     end
 
@@ -63,19 +58,17 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
 
     # Propagate Dimorphos
     propagation_steps = 100000
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
-    # Select every 10th element to match the photos
-    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
-
-    # Compute orbital elements vs time for the fitted orbit
-    a_vector = zeros(Float64, propagation_steps + 1)
-    e_vector = zeros(Float64, propagation_steps + 1)
-    i_vector = zeros(Float64, propagation_steps + 1)
-    Omega_vector = zeros(Float64, propagation_steps + 1)
-    omega_vector = zeros(Float64, propagation_steps + 1)
-    M_vector = zeros(Float64, propagation_steps + 1)
-    for i in 1:(propagation_steps+1)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_steps, enable_perturbation)
+ 
+    # Compute orbital elements vs time for the original orbit
+    vector_size = size(x_dimorphos)[1]
+    a_vector = zeros(Float64, vector_size)
+    e_vector = zeros(Float64, vector_size)
+    i_vector = zeros(Float64, vector_size)
+    Omega_vector = zeros(Float64, vector_size)
+    omega_vector = zeros(Float64, vector_size)
+    M_vector = zeros(Float64, vector_size)
+    for i in 1:(vector_size)
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
     end
 
