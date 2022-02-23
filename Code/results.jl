@@ -50,28 +50,26 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    propagation_steps = 10000
-    steps_taken = 1000
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x,y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation)
-    # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
-    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    # Select every xth element to match the photos taken
+    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
+    x_dimorphos = x_dimorphos[1:photo_selector:end]
+    y_dimorphos = y_dimorphos[1:photo_selector:end]
+    z_dimorphos = z_dimorphos[1:photo_selector:end]
+    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
+    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
+    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
+    t_vector = t_vector[1:photo_selector:end]
  
-    # Compute orbital elements vs time for the original orbit
-    a_vector = zeros(Float64, propagation_steps + 1)
-    e_vector = zeros(Float64, propagation_steps + 1)
-    i_vector = zeros(Float64, propagation_steps + 1)
-    Omega_vector = zeros(Float64, propagation_steps + 1)
-    omega_vector = zeros(Float64, propagation_steps + 1)
-    M_vector = zeros(Float64, propagation_steps + 1)
-    for i in 1:(steps_taken+1)
+    # Compute orbital elements vs time for the fitted orbit
+    vector_size = size(x_dimorphos)[1]
+    a_vector = zeros(Float64, vector_size)
+    e_vector = zeros(Float64, vector_size)
+    i_vector = zeros(Float64, vector_size)
+    Omega_vector = zeros(Float64, vector_size)
+    omega_vector = zeros(Float64, vector_size)
+    M_vector = zeros(Float64, vector_size)
+    for i in 1:vector_size
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
         i_vector[i] = deg2rad(i_vector[i])
         Omega_vector[i] = deg2rad(Omega_vector[i])
@@ -99,26 +97,26 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation)
-    # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
-    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    # Select every xth element to match the photos taken
+    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
+    x_dimorphos = x_dimorphos[1:photo_selector:end]
+    y_dimorphos = y_dimorphos[1:photo_selector:end]
+    z_dimorphos = z_dimorphos[1:photo_selector:end]
+    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
+    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
+    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
+    t_vector = t_vector[1:photo_selector:end]
 
     # Compute orbital elements vs time for the fitted orbit
-    a_vector = zeros(Float64, propagation_steps + 1)
-    e_vector = zeros(Float64, propagation_steps + 1)
-    i_vector = zeros(Float64, propagation_steps + 1)
-    Omega_vector = zeros(Float64, propagation_steps + 1)
-    omega_vector = zeros(Float64, propagation_steps + 1)
-    M_vector = zeros(Float64, propagation_steps + 1)
-    for i in 1:(steps_taken+1)
+    vector_size = size(x_dimorphos)[1]
+    a_vector = zeros(Float64, vector_size)
+    e_vector = zeros(Float64, vector_size)
+    i_vector = zeros(Float64, vector_size)
+    Omega_vector = zeros(Float64, vector_size)
+    omega_vector = zeros(Float64, vector_size)
+    M_vector = zeros(Float64, vector_size)
+    for i in 1:vector_size
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] = cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i],vy_dimorphos[i], vz_dimorphos[i]], mu_system)
         i_vector[i] = deg2rad(i_vector[i])
         Omega_vector[i] = deg2rad(Omega_vector[i])
@@ -131,10 +129,10 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     percentage_errors = zeros(Float64, 6)
     for i in 1:6
         sum = 0.0
-        for j in 1:(steps_taken+1)
+        for j in 1:vector_size
             sum += abs((observed_values[j, i] - predicted_values[j, i])/observed_values[j, i])
         end
-        percentage_errors[i] = 100 * sum / propagation_steps
+        percentage_errors[i] = 100 * sum / (vector_size)
         println("Mean absolute percentage error for element " * string(i) * " is " * string(percentage_errors[i]) * " %")
     end
     return Nothing
