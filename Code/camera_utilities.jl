@@ -33,20 +33,21 @@ function convert_to_pixels(x_data, y_data, x_boundaries, y_boundaries)
     pixels = 1020
     image_size = pixels + 1 
 
-    # Bottom left pixel as [0, 0]
-    x_bottom_left = minimum(x_boundaries)
-    y_bottom_left = minimum(y_boundaries)
-    # Top left pixel as [0, image_size]
-    y_top_left = maximum(y_boundaries)
-    # Bottom right pixel as [image_size, 0]
-    x_bottom_right = maximum(x_boundaries)
+    x_pixel = Array{Union{Missing, Float64,},1}(missing,length(x_data))
+    y_pixel = Array{Union{Missing, Float64},1}(missing,length(x_data))
 
-    # Generate pixels 
-    x_pixel_range = LinRange(x_bottom_left, x_bottom_right, image_size)
-    y_pixel_range = LinRange(y_bottom_left, y_top_left, image_size)
-    x_pixel = zeros(Int64, length(x_data))
-    y_pixel = zeros(Int64, length(x_data))
     for i=1:length(x_data)
+        # Bottom left pixel as [0, 0]
+        x_bottom_left = minimum(x_boundaries[i, :])
+        y_bottom_left = minimum(y_boundaries[i, :])
+        # Top left pixel as [0, image_size]
+        y_top_left = maximum(y_boundaries[i, :])
+        # Bottom right pixel as [image_size, 0]
+        x_bottom_right = maximum(x_boundaries[i, :])
+
+        # Generate pixels 
+        x_pixel_range = LinRange(x_bottom_left, x_bottom_right, image_size)
+        y_pixel_range = LinRange(y_bottom_left, y_top_left, image_size)
         # Assign x_pixel coordinate
         for j=1:length(x_pixel_range)-1
             if x_data[i] >= x_pixel_range[j] && x_data[i] <= x_pixel_range[j+1]
@@ -61,6 +62,29 @@ function convert_to_pixels(x_data, y_data, x_boundaries, y_boundaries)
                 break
             end
         end
+        # Check if values have to be rejected
+        if ismissing(x_pixel[i]) || ismissing(y_pixel[i])
+            x_pixel[i] = missing
+            y_pixel[i] = missing
+        end
     end
     return x_pixel, y_pixel
+end
+
+
+function error_rotation_matrix(angle, axis)
+    if axis==1
+        rotation_matrix = [1.0 0.0 0.0;
+                           0.0 cos(angle) -sin(angle); 
+                           0.0 sin(angle) cos(angle)]
+    elseif axis==2
+        rotation_matrix = [cos(angle) 0.0 sin(angle);
+                           0.0 1.0 0.0; 
+                           -sin(angle) 0.0 cos(angle)]
+    else
+        rotation_matrix = [cos(angle) -sin(angle) 0.0;
+                           sin(angle) cos(angle) 0.0; 
+                           0.0 0.0 1.0]
+    end
+    return rotation_matrix
 end
