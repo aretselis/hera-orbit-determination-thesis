@@ -33,21 +33,23 @@ function convert_to_pixels(x_data, y_data, x_boundaries, y_boundaries)
     pixels = 1020
     image_size = pixels + 1 
 
-    x_pixel = Array{Union{Missing, Float64,},1}(missing,length(x_data))
-    y_pixel = Array{Union{Missing, Float64},1}(missing,length(x_data))
+    # Bottom left pixel as [0, 0]
+    x_bottom_left = minimum(x_boundaries)
+    y_bottom_left = minimum(y_boundaries)
+    # Top left pixel as [0, image_size]
+    y_top_left = maximum(y_boundaries)
+    # Bottom right pixel as [image_size, 0]
+    x_bottom_right = maximum(x_boundaries)
+
+    # Generate pixels 
+    x_pixel_range = LinRange(x_bottom_left, x_bottom_right, image_size)
+    y_pixel_range = LinRange(y_bottom_left, y_top_left, image_size)
+
+    # Initialize array 
+    x_pixel = Array{Union{Missing, Float64,}, 1}(missing, length(x_data))
+    y_pixel = Array{Union{Missing, Float64}, 1}(missing, length(x_data))
 
     for i=1:length(x_data)
-        # Bottom left pixel as [0, 0]
-        x_bottom_left = minimum(x_boundaries[i, :])
-        y_bottom_left = minimum(y_boundaries[i, :])
-        # Top left pixel as [0, image_size]
-        y_top_left = maximum(y_boundaries[i, :])
-        # Bottom right pixel as [image_size, 0]
-        x_bottom_right = maximum(x_boundaries[i, :])
-
-        # Generate pixels 
-        x_pixel_range = LinRange(x_bottom_left, x_bottom_right, image_size)
-        y_pixel_range = LinRange(y_bottom_left, y_top_left, image_size)
         # Assign x_pixel coordinate
         for j=1:length(x_pixel_range)-1
             if x_data[i] >= x_pixel_range[j] && x_data[i] <= x_pixel_range[j+1]
