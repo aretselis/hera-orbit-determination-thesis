@@ -5,7 +5,7 @@ function compute_percentage_error(actual_elements, predicted_elements)
     actual_elements, Vector(Float64, 6) containing actual orbital elements
     predicted_elements, Vector(Float64, 6) containing predicted orbital elements 
     Output:
-    percentage_errors, Vector(Float64, 6) containing percentage (%) errors
+    percentage_errors, Vector(Float64, 6) containing percentage (%) errors on initial element values
     =#
 
     percentage_errors = zeros(Float64, 6)
@@ -29,7 +29,7 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     actual_elements, Vector(Float64, 6) containing actual orbital elements
     predicted_elements, Vector(Float64, 6) containing predicted orbital elements 
     Output:
-    percentage_errors, Vector(Float64, 6) mean absolute percentage errors (%) errors
+    percentage_errors, Vector(Float64, 6) mean absolute percentage error (%) for each element
     =#
 
     # Dimorphos orbit
