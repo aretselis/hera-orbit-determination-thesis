@@ -1,0 +1,351 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Masters/Doctoral Thesis 
+% LaTeX Template
+% Version 2.5 (27/8/17)
+%
+% This template was downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Version 2.x major modifications by:
+% Vel (vel@latextemplates.com)
+%
+% This template is based on a template by:
+% Steve Gunn (http://users.ecs.soton.ac.uk/srg/softwaretools/document/templates/)
+% Sunil Patel (http://www.sunilpatel.co.uk/thesis-template/)
+%
+% Template license:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\PassOptionsToPackage{greek,main=english}{babel}
+
+\documentclass[
+11pt, % The default document font size, options: 10pt, 11pt, 12pt
+%oneside, % Two side (alternating margins) for binding by default, uncomment to switch to one side
+english, % ngerman for German
+onehalfspacing, % Single line spacing, alternatives: onehalfspacing or doublespacing
+%draft, % Uncomment to enable draft mode (no pictures, no links, overfull hboxes indicated)
+%nolistspacing, % If the document is onehalfspacing or doublespacing, uncomment this to set spacing in lists to single
+%liststotoc, % Uncomment to add the list of figures/tables/etc to the table of contents
+%toctotoc, % Uncomment to add the main table of contents to the table of contents
+parskip, % Uncomment to add space between paragraphs
+%nohyperref, % Uncomment to not load the hyperref package
+headsepline, % Uncomment to get a line under the header
+%chapterinoneline, % Uncomment to place the chapter title next to the number on one line
+%consistentlayout, % Uncomment to change the layout of the declaration, abstract and acknowledgements pages to match the default layout
+]{MastersDoctoralThesis} % The class file specifying the document structure
+
+\let\thesisdegree=\degree
+\undef\degree
+
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+
+\usepackage{mathpazo} % Use the Palatino font by default
+\usepackage{comment}
+\usepackage{lscape}
+\usepackage{minted}
+\usemintedstyle{friendly}
+\usepackage{xcolor}
+\definecolor{light-gray}{gray}{0.95}
+\usepackage{amsmath}
+\usepackage{gensymb}
+\setlength\parindent{0pt}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+
+
+\usepackage[backend=bibtex,style=numeric,natbib=true]{biblatex} % Use the bibtex backend with the authoryear citation style (which resembles APA)
+
+\addbibresource{example.bib} % The filename of the bibliography
+
+\usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
+
+%----------------------------------------------------------------------------------------
+%	MARGIN SETTINGS
+%----------------------------------------------------------------------------------------
+
+\geometry{
+	paper=a4paper, % Change to letterpaper for US letter
+	inner=2.5cm, % Inner margin
+	outer=3.8cm, % Outer margin
+	bindingoffset=.5cm, % Binding offset
+	top=1.5cm, % Top margin
+	bottom=1.5cm, % Bottom margin
+	%showframe, % Uncomment to show how the type block is set on the page
+}
+
+%----------------------------------------------------------------------------------------
+%	THESIS INFORMATION
+%----------------------------------------------------------------------------------------
+
+\thesistitle{Image based orbit determination of the Didymos-Dimorphos binary asteroid system using the HERA spacecraft} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
+\supervisor{Prof. Kleomenis \textsc{Tsiganis}} % Your supervisor's name, this is used in the title page, print it elsewhere with \supname
+\examiner{} % Your examiner's name, this is not currently used anywhere in the template, print it elsewhere with \examname
+\thesisdegree{Computational Physics} % Your degree name, this is used in the title page and abstract, print it elsewhere with \degreename
+\author{Anastasios-Faidon \textsc{Retselis}} % Your name, this is used in the title page and abstract, print it elsewhere with \authorname
+\addresses{} % Your address, this is not currently used anywhere in the template, print it elsewhere with \addressname
+
+\subject{Physics} % Your subject area, this is not currently used anywhere in the template, print it elsewhere with \subjectname
+\keywords{} % Keywords for your thesis, this is not currently used anywhere in the template, print it elsewhere with \keywordnames
+\university{\href{http://www.auth.gr}{Aristotle University of Thessaloniki}} % Your university's name and URL, this is used in the title page and abstract, print it elsewhere with \univname
+\department{\href{https://www.physics.auth.gr/}{Physics Department}} % Your department's name and URL, this is used in the title page and abstract, print it elsewhere with \deptname
+\group{\href{http://acubesat.asat.gr}{AcubeSAT Project}} % Your research group's name and URL, this is used in the title page, print it elsewhere with \groupname
+\faculty{\href{http://www.sci.auth.gr}{Faculty of Sciences}} % Your faculty's name and URL, this is used in the title page and abstract, print it elsewhere with \facname
+
+\AtBeginDocument{
+\hypersetup{pdftitle=\ttitle} % Set the PDF's title to your title
+\hypersetup{pdfauthor=\authorname} % Set the PDF's author to your name
+\hypersetup{pdfkeywords=\keywordnames} % Set the PDF's keywords to your keywords
+\hypersetup{bookmarksnumbered=true} % Add numbering to PDF bookmarks
+}
+
+\begin{document}
+\hypersetup{urlcolor=blue}
+\hypersetup{linkcolor=blue}
+\hypersetup{citecolor=cyan}
+\frontmatter % Use roman page numbering style (i, ii, iii, iv...) for the pre-content pages
+
+
+\pagestyle{plain} % Default to the plain heading style until the thesis style is called for the body content
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\begin{titlepage}
+\begin{center}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{Figures/LogoAUTH72ppi.png}
+%\label{fig:auth_logo}
+\end{figure}
+
+\vspace*{.04\textheight}
+{\scshape\LARGE \univname\par}\vspace{1cm} % University name
+\textsc{\Large Master Thesis}\\[0.5cm] % Thesis type
+
+\HRule \\[0.4cm] % Horizontal line
+{\huge \bfseries \ttitle\par}\vspace{0.4cm} % Thesis title
+\HRule \\[1cm] % Horizontal line
+ 
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Author:}\\
+\href{https://gitlab.com/retse}{Anastasios-Faidon \textsc{Retselis}}
+\end{flushleft}
+\end{minipage}
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushright} \large
+\emph{Supervisor:} \\
+\href{http://users.auth.gr/tsiganis/}{Prof. Kleomenis \textsc{Tsiganis}}
+\end{flushright}
+\end{minipage}\\[1cm]
+ 
+\vfill
+
+\large \textit{A thesis submitted in fulfillment of the requirements\\ for the Master of Science (MSc) degree in \degreename}\\[0.3cm] % University requirement text
+\textit{in the}\\[0.4cm]
+\facname\\\deptname\\[1cm] % Research group name and department name
+ 
+\vfill
+
+{\large \today}\\[4cm] % Date
+%\includegraphics{Logo} % University/department logo - uncomment to place it
+ 
+\vfill
+\end{center}
+\end{titlepage}
+
+%----------------------------------------------------------------------------------------
+%	DECLARATION PAGE
+%----------------------------------------------------------------------------------------
+
+%\begin{declaration}
+%\addchaptertocentry{\authorshipname} % Add the declaration to the table of contents
+%\noindent I, \authorname, declare that this thesis titled, \enquote{\ttitle} and the work presented in it are my own. I confirm that:
+
+%\begin{itemize} 
+%\item This work was done wholly or mainly while in candidature for a research degree at this University.
+%\item Where any part of this thesis has previously been submitted for a degree or any other qualification at this University or any other institution, this has been clearly stated.
+%\item Where I have consulted the published work of others, this is always clearly attributed.
+%\item Where I have quoted from the work of others, the source is always given. With the exception of such quotations, this thesis is entirely my own work.
+%\item I have acknowledged all main sources of help.
+%\item Where the thesis is based on work done by myself jointly with others, I have made clear exactly what was done by others and what I have contributed myself.\\
+%\end{itemize}
+ 
+%\noindent Signed:\\
+%\rule[0.5em]{25em}{0.5pt} % This prints a line for the signature
+ 
+%\noindent Date:\\
+%\rule[0.5em]{25em}{0.5pt} % This prints a line to write the date
+%\end{declaration}
+
+%cleardoublepage
+\cleardoublepage
+
+%----------------------------------------------------------------------------------------
+%	QUOTATION PAGE
+%----------------------------------------------------------------------------------------
+
+%\vspace*{0.2\textheight}
+
+%\noindent\enquote{\itshape Thanks to my solid academic training, today I can write hundreds of words on virtually any topic without possessing a shred of information, which is how I got a good job in journalism.}\bigbreak
+
+%\hfill Dave Barry
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT PAGE
+%----------------------------------------------------------------------------------------
+
+\begin{abstract}{\byname{} Asimakis \textsc{Anthopoulos} and Anastasios-Faidon \textsc{Retselis}}
+\addchaptertocentry{\abstractname} % Add the abstract to the table of contents
+The number of small- and nano-satellites being launched into orbit is expected to continue to grow in the coming years. In order to avoid the creation of space debris, spacecraft developers have to take action in order to reduce the severity of space debris. A widely used guideline is to ensure that no space system is left in the Low Earth Orbit environment for more than 25 years after the end of mission. Given this guideline, this thesis investigates 1U, 2U and 3U CubeSats in Low Earth Orbit using the General Mission Analysis Tool (GMAT) in order to determine the maximum allowable value of the semi-major axis so that the 25 year limit is met. This analysis results in orbital decay diagrams which can be used by CubeSat developers in order to evaluate different orbits early in the design phase.
+
+These findings are then applied to the AcubeSAT mission in order to perform an orbital analysis tailored to the mission. AcubeSAT is a 3U CubeSat that is currently being designed by students in the Aristotle University of Thessaloniki with the support of the Education Office of the European Space Agency, under the educational Fly Your Satellite! Programme. The objective of AcubeSAT's mission is to probe the expression of eukaryotic genes in the environment of Low Earth Orbit. AcubeSAT's design calls for a very specific orientation to be achieved in order to downlink all images to the ground segment. This orientation is evaluated using the theory of spin-orbit coupling to determine if this orientation can be maintained in the event of a failure in the Attitude Determination \& Control Subsystem of the spacecraft. Based on the findings, an alternative design solution is also proposed.
+
+\end{abstract}
+
+{
+    \makeatletter
+    \def\facname{\foreignlanguage{greek}{\href{www.sci.auth.gr}{Σχολή Θετικών Επιστημών}}}
+    \def\deptname{\foreignlanguage{greek}{\href{www.physics.auth.gr}{Τμήμα Φυσικής}}}
+    \def\univname{\foreignlanguage{greek}{\href{www.auth.gr}{Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης}}}
+    \def\abstractname{\foreignlanguage{greek}{Περίληψη}}
+    \def\@title{\foreignlanguage{greek}{Μελέτη τροχιάς και το πρόβλημα σύζευξης σπιν-τροχιάς για την αποστολή} AcubeSAT}
+    \fontfamily{artemisia}\selectfont
+    
+    \begin{abstract}{\foreignlanguage{greek}{Ασημάκης \textsc{Ανθοπουλος} και Αναστάσιος-Φαίδων \textsc{Ρετσελης}}}
+    \addchaptertocentry{{\fontfamily{artemisia}\selectfont\abstractname}} % Add the abstract to the table of contents
+    \foreignlanguage{greek}{Ο αριθμός μικρο- και νανοδορυφόρων που πρόκειται να εκτοξευθούν σε τροχιά αναμένεται να αυξηθεί στα επόμενα χρόνια. Για να αποφευχθεί η δημιουργία διαστημικών σκουπιδιών, οι κατασκευαστές των διαστημικών σκαφών θα πρέπει να προβούν στις κατάλληλες πράξεις για να μειώσουν τον κίνδυνο των διαστημικών σκουπιδιών. Για το σκοπό αυτό χρησιμοποιείται ευρύτατα η οδηγία που αναφέρει πως κανένα διαστημικό σύστημα δεν πρέπει να μείνει στο περιβάλλον χαμηλής γήινης τροχιάς} (LEO) \foreignlanguage{greek}{για χρονικό διάστημα μεγαλύτερο των 25 ετών μετά το πέρας της αποστολής. Η εργασία αυτή ερευνά την συγκεκριμένη οδηγία για την περίπτωση των} 1U, 2U \foreignlanguage{greek}{και} 3U CubeSats \foreignlanguage{greek}{στο περιβάλλον της χαμηλής γήινης τροχιάς χρησιμοποιώντας το εργαλείο} General Mission Analysis Tool (GMAT)\foreignlanguage{greek}{, ούτως ώστε να βρεθούν τα ανώτατα όρια του μεγάλου ημιάξονα για να βρίσκεται η τροχιά κάτω από το όριο των 25 ετών}. \foreignlanguage{greek}{Η ανάλυση έχει ως αποτέλεσμα διαγράμματα που δείχνουν το χρόνο ζωής σε τροχιά συναρτήσει του αρχικού υψομέτρου, τα οποία μπορούν να χρησιμοποιηθούν από κατασκευαστές} CubeSat \foreignlanguage{greek}{σε αρχικά στάδια σχεδιασμού για να μελετηθούν διαφορετικές τροχιές.}
+    
+    \foreignlanguage{greek}{Τα αποτελέσματα αυτά χρησιμοποιούνται για την μελέτη της τροχιάς της αποστολής} AcubeSAT. \foreignlanguage{greek}{Το} AcubeSAT \foreignlanguage{greek}{είναι ένα} 3U CubeSAT \foreignlanguage{greek}{το οποίο σχεδιάζεται από φοιτητές του Αριστοτέλειου Πανεπιστημίου Θεσσαλονίκης με την υποστήριξη του εκπαιδευτικού γραφείου του Ευρωπαϊκού Οργανισμού Διαστήματος, υπό την αιγίδα του προγράμματος} Fly Your Satellite!. \foreignlanguage{greek}{H αποστολή} AcubeSAT \foreignlanguage{greek}{έχει ως στόχο να μελετήσει τη γονιδιακή έκφραση ευκαρυωτικών κυττάρων στο περιβάλλον της χαμηλής γήινης τροχιάς. Ο σχεδιασμός του} AcubeSAT \foreignlanguage{greek}{χρησιμοποιεί έναν συγκεκριμένο προσανατολισμό για να μπορέσει να στείλει τις εικόνες του πειράματος πίσω στη Γη. Ο προσανατολισμός αυτός διερευνάται με τη χρήση του προβλήματος σπιν-τροχιάς για να διευκρινιστεί εαν μπορεί να διατηρηθεί σε περίπτωση αποτυχίας του συστήματος ελέγχου προσανατολισμού του δορυφόρου. Με βάση τα αποτελέσματα, προτείνεται και ένας διαφορετικός σχεδιασμός για την αποστολή.} 
+    \end{abstract}
+    \makeatother
+}
+%----------------------------------------------------------------------------------------
+%	ACKNOWLEDGEMENTS
+%----------------------------------------------------------------------------------------
+
+\begin{acknowledgements}
+\addchaptertocentry{\acknowledgementname} % Add the acknowledgements to the table of contents
+Firstly, we would like to thank our supervisors Prof. Georgios Voygiatzis and Prof. Kleomenis Tsiganis for their continuous support and guidance throughout the research phase of this thesis. Furthermore, we would like to thank all of our colleagues working at the AcubeSAT project for enabling us to write this thesis by working hard to design all aspects of the spacecraft for the past 4 years. Special thanks to Konstantinos Kanavouras for his help in solving some \LaTeX\  issues in this thesis. Finally, we would like to thank our loved ones for supporting us throughout the years. We would have not been able to make it without you.
+
+\vspace*{0.2\textheight}
+\noindent\enquote{\itshape If it's not fun, why bother...}\bigbreak
+
+\hfill - Reginald "Reggie" Fils-Aimé
+
+\vspace*{0.1\textheight}
+
+\noindent\enquote{\itshape Everything is fun, but when you get to the shit, it is fucking shit.}\bigbreak
+
+\hfill - An anonymous AcubeSAT member during a high pressure period.
+
+\end{acknowledgements}
+
+%----------------------------------------------------------------------------------------
+%	LIST OF CONTENTS/FIGURES/TABLES PAGES
+%----------------------------------------------------------------------------------------
+
+\tableofcontents % Prints the main table of contents
+
+\listoffigures % Prints the list of figures
+
+\listoftables % Prints the list of tables
+
+%----------------------------------------------------------------------------------------
+%	ABBREVIATIONS
+%----------------------------------------------------------------------------------------
+
+%\begin{abbreviations}{ll} % Include a list of abbreviations (a table of two columns)
+
+%\textbf{LAH} & \textbf{L}ist \textbf{A}bbreviations \textbf{H}ere\\
+%\textbf{WSF} & \textbf{W}hat (it) \textbf{S}tands \textbf{F}or\\
+%
+%\end{abbreviations}
+
+%----------------------------------------------------------------------------------------
+%	PHYSICAL CONSTANTS/OTHER DEFINITIONS
+%----------------------------------------------------------------------------------------
+
+%\begin{constants}{lr@{${}={}$}l} % The list of physical constants is a three column table
+
+% The \SI{}{} command is provided by the siunitx package, see its documentation for instructions on how to use it
+
+%Speed of Light & $c_{0}$ & \SI{2.99792458e8}{\meter\per\second} (exact)\\
+%Constant Name & $Symbol$ & $Constant Value$ with units\\
+
+%\end{constants}
+
+%----------------------------------------------------------------------------------------
+%	SYMBOLS
+%----------------------------------------------------------------------------------------
+
+%\begin{symbols}{lll} % Include a list of Symbols (a three column table)
+
+%$a$ & distance & \si{\meter} \\
+%$P$ & power & \si{\watt} (\si{\joule\per\second}) \\
+%Symbol & Name & Unit \\
+
+%\addlinespace % Gap to separate the Roman symbols from the Greek
+
+%$\omega$ & angular frequency & \si{\radian} \\
+
+%\end{symbols}
+
+%----------------------------------------------------------------------------------------
+%	DEDICATION
+%----------------------------------------------------------------------------------------
+
+%\dedicatory{For/Dedicated to/To my\ldots} 
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - CHAPTERS
+%----------------------------------------------------------------------------------------
+
+\mainmatter % Begin numeric (1,2,3...) page numbering
+
+\pagestyle{thesis} % Return the page headers back to the "thesis" style
+
+% Include the chapters of the thesis as separate files from the Chapters folder
+% Uncomment the lines as you write the chapters
+
+%\include{Chapters/Chapter1}
+%\include{Chapters/Chapter3}
+%\include{Chapters/Chapter2} 
+%\include{Chapters/Chapter4} 
+%\include{Chapters/Chapter5} 
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - APPENDICES
+%----------------------------------------------------------------------------------------
+
+%\appendix % Cue to tell LaTeX that the following "chapters" are Appendices
+
+% Include the appendices of the thesis as separate files from the Appendices folder
+% Uncomment the lines as you write the Appendices
+
+%\include{Appendices/AppendixGMAT}
+%\include{Appendices/AppendixDecay}
+%\include{Appendices/AppendixMissionAnalysis}
+%\include{Appendices/AppendixMathematica}
+%\include{Appendices/AppendixUnstabelSolution}
+%\include{Appendices/AppendixStableSolution}
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+\printbibliography[heading=bibintoc]
+
+%----------------------------------------------------------------------------------------
+
+\end{document}  
