@@ -1,4 +1,4 @@
-using SPICE, ProgressBars, Plots, LinearAlgebra, Optim, Distributions, Random
+using SPICE, ProgressBars, Plots, LinearAlgebra, Distributions, Random,  DifferentialEquations, Metaheuristics
 include("orbital_utilities.jl")
 include("propagators.jl")
 include("spice_utilities.jl")
@@ -8,57 +8,15 @@ include("results.jl")
 include("plotting.jl")
 
 
-function load_hera_spice_kernels()
-    # Extract Hera orbit from SPICE
-    # Load leap seconds kernel
-    leap_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\lsk\\naif0012.tls"
-    furnsh(leap_kernel)
-    # Load all planets, Didymos-Dimorphos and HERA kernels
-    planets_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\de432s.bsp"
-    didymos_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3_v01.bsp"
-    dimorphos_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3_v01.bsp"
-    didymos_barycenter_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\didymos_hor_000101_500101_v01.bsp"
-    hera_kernel = "C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_sc_PO_v01.bsp"
-    hera_ck = "C:\\Users\\retse\\repos\\hera-data\\kernels\\ck\\hera_sc_PO_EMA_20270209_20270727_f20181203_v03.bc"
-    hera_equipment = "C:\\Users\\retse\\repos\\hera-data\\kernels\\fk\\hera_v07.tf"
-    hera_pck = "C:\\Users\\retse\\repos\\hera-data\\kernels\\pck\\hera_didymos_v04.tpc"
-    bodies_pck = "C:\\Users\\retse\\repos\\hera-data\\kernels\\pck\\de-403-masses.tpc"
-    hera_sclk = "C:\\Users\\retse\\repos\\hera-data\\kernels\\sclk\\hera_fict_20181203.tsc"
-    hera_instruments = "C:\\Users\\retse\\repos\\hera-data\\kernels\\ik\\hera_afc_v03.ti"
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP1_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3VCF_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_DCP3_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymain_ECP_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP1_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3VCF_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_DCP3_v01.bsp")
-    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_didymoon_ECP_v01.bsp")
-    furnsh(planets_kernel)
-    furnsh(didymos_kernel)
-    furnsh(dimorphos_kernel)
-    furnsh(didymos_barycenter_kernel)
-    furnsh(hera_kernel)
-    furnsh(hera_ck)
-    furnsh(hera_equipment)
-    furnsh(hera_pck)
-    furnsh(bodies_pck)
-    furnsh(hera_sclk)
-    furnsh(hera_instruments)
-end
-
-
 function main()
     # Dimorphos orbit
     a_dimorphos = 1183.725 # Semi-major axis
-    e_dimorphos = 0.000029 # Eccentricity
+    e_dimorphos = 0.000074 # Eccentricity
     i_dimorphos = 6.93 # Inclination
-    Omega_dimorphos = 7.2 # Argument of periapsis
-    omega_dimorphos = 12.6 # Longitude of the ascending node
-    M_dimorphos = 27.35 # Mean anomaly
+    Omega_dimorphos = 7.2 # Longitude of the ascending node
+    omega_dimorphos = 8.6 # Argument of periapsis
+    M_dimorphos = 17.35 # Mean anomaly
 
-    # Dimorphos properties
-    area_dimorphos = 2*pi*85.0^2
-    c_p = 2.2
 
     # Compute initial position and velocity vector from orbital elements
     r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
@@ -70,31 +28,30 @@ function main()
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    propagation_steps = 10000
-    propagation_step_size = (end_time-start_time)/propagation_steps
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_step_size, enable_perturbation, area_dimorphos, c_p)
-    # Select every 10th element to match the photos
-    x_dimorphos = x_dimorphos[1:10:end]
-    y_dimorphos = y_dimorphos[1:10:end]
-    z_dimorphos = z_dimorphos[1:10:end]
-    vx_dimorphos = vx_dimorphos[1:10:end]
-    vy_dimorphos = vy_dimorphos[1:10:end]
-    vz_dimorphos = vz_dimorphos[1:10:end]
-    t_vector = t_vector[1:10:end]
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    # Select every xth element to match the photos taken
+    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
+    x_dimorphos = x_dimorphos[1:photo_selector:end]
+    y_dimorphos = y_dimorphos[1:photo_selector:end]
+    z_dimorphos = z_dimorphos[1:photo_selector:end]
+    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
+    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
+    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
+    t_vector = t_vector[1:photo_selector:end]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
     spice_end_time = spice_start_time + end_time
 
     # Initialize position arrays (x, y, z)
-    didymos_coordinates = zeros(Float64, number_of_steps + 1, 3)
-    barycenter_coordinates = zeros(Float64, number_of_steps + 1, 3)
+    didymos_coordinates = zeros(Float64, total_photos, 3)
+    barycenter_coordinates = zeros(Float64, total_photos, 3)
     barycenter_offset = zeros(Float64, 3)
     barycenter_initial_coordinates = zeros(Float64, 3)
-    camera_position_didymos = zeros(Float64, number_of_steps + 1, 3)
-    camera_position_dimorphos = zeros(Float64, number_of_steps + 1, 3)
-    didymos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
-    dimorphos_pixel_coordinates = zeros(Float64, number_of_steps + 1, 2)
+    camera_position_didymos = zeros(Float64, total_photos, 3)
+    camera_position_dimorphos = zeros(Float64, total_photos, 3)
+    didymos_pixel_coordinates = zeros(Float64, total_photos, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, total_photos, 2)
 
     # HERA_AFC-1 coordinate system unit vectors
     e_x = [1.0, 0.0, 0.0]
@@ -105,7 +62,8 @@ function main()
     focal_length = 10.6*10^-5 # [km]
     iteration = 1
     println("\nSPICE calculations:")
-    for i in ProgressBar(spice_start_time:step_size:spice_end_time)
+    for current_time in ProgressBar(LinRange(start_time, end_time, total_photos))
+        i = spice_start_time + current_time
         position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
         position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
         rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
@@ -135,6 +93,10 @@ function main()
         rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
         camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
         camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Add pointing error 
+        pointing_error_matrix = error_rotation_matrix(random_error[iteration], random_axis[iteration])
+        camera_position_didymos[iteration, :] = pointing_error_matrix * didymos_coordinates[iteration, :]
+        camera_position_dimorphos[iteration, :] = pointing_error_matrix * dimorphos_coordinates[iteration, :]
         # Store pixel coordinates for Didymos and Dimorphos
         for j in 1:2
             didymos_pixel_coordinates[iteration, j] = focal_length*camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
@@ -181,9 +143,20 @@ function main()
     end
 
     # Compute coordinates in pixels
-    x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+    x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
     global x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
+
+    # Reject images where we cannot see one object 
+    for i in 1:length(x_pixel_didymos)
+        if ismissing(x_pixel_didymos[i]) || ismissing(x_pixel_dimorphos[i])
+            x_pixel_didymos[i] = missing
+            y_pixel_didymos[i] = missing
+            x_pixel_dimorphos[i] = missing
+            y_pixel_dimorphos[i] = missing
+        end
+    end
+    usable_photos = length(collect(skipmissing(x_pixel_dimorphos)))
 
     # Add centroid pixel error
     x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
@@ -191,66 +164,20 @@ function main()
 
     # Minimize square mean error to find best orbital elements
     # Bounds for optimization
-    lower = [1190.0-30, 0.0000001, 0.0, 0.0, 1.0, 27.4]
-    upper = [1190.0+30, 0.0001, 10.0, 10.0, 10.0, 28.9]
-    global initial_guess = [1200.0, 0.000039, 4.0, 5.0, 3.0, 27.6]
-
-    # Fit mean anomaly
-    global fit_mask = [false, false, false, false, false, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
-    initial_guess[6] = Optim.minimizer(res)[6]
-
-    # Fit argument of pericenter
-    fit_mask = [false, false, false, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
-    initial_guess[5] = Optim.minimizer(res)[5]
-    initial_guess[6] = Optim.minimizer(res)[6]
-
-    # Fit semi-major axis
-    fit_mask = [true, false, false, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
-    initial_guess[1] = Optim.minimizer(res)[1]
-    initial_guess[5] = Optim.minimizer(res)[5]
-    initial_guess[6] = Optim.minimizer(res)[6]
-
-    # Fit eccentricity
-    fit_mask = [true, true, false, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
-    initial_guess[1] = Optim.minimizer(res)[1]
-    initial_guess[2] = Optim.minimizer(res)[2]
-    initial_guess[5] = Optim.minimizer(res)[5]
-    initial_guess[6] = Optim.minimizer(res)[6]
-
-    # Fit inclination
-    fit_mask = [true, true, true, false, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
-    initial_guess[1] = Optim.minimizer(res)[1]
-    initial_guess[2] = Optim.minimizer(res)[2]
-    initial_guess[3] = Optim.minimizer(res)[3]
-    initial_guess[5] = Optim.minimizer(res)[5]
-    initial_guess[6] = Optim.minimizer(res)[6]
-
-    # Fit longitude of the ascending node
-    fit_mask = [true, true, true, true, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
-    initial_guess[1] = Optim.minimizer(res)[1]
-    initial_guess[2] = Optim.minimizer(res)[2]
-    initial_guess[3] = Optim.minimizer(res)[3]
-    initial_guess[4] = Optim.minimizer(res)[4]
-    initial_guess[5] = Optim.minimizer(res)[5]
-    initial_guess[6] = Optim.minimizer(res)[6]
-
-    # Perform a final fit 
-    fit_mask = [true, true, true, true, true, true]
-    res = optimize(residuals, initial_guess, Optim.Options(iterations = 1000, show_trace = true, extended_trace = true))
+    lower = [1190.0-30, 0.000001, 0.0, 0.0, 1.0, 10.0]
+    upper = [1190.0+30, 0.0001, 10.0, 10.0, 10.0, 21.0]
+    bounds = [1190.0-30 0.000001 0.0 0.0 1.0 10.0; 1190.0+30 0.0001 10.0 10.0 10.0 21.0]
+    global initial_guess = [1200.0, 0.000039, 4.0, 5.0, 3.0, 12.6]
+   
+    result = optimize(residuals, bounds, PSO(N = 50, C1=1.5, C2=1.5, ω = 0.7, options=Options(debug=true, iterations=100)))
         
     # Extract final guess from optimization
-    a_final = Optim.minimizer(res)[1]
-    e_final = Optim.minimizer(res)[2]
-    i_final = Optim.minimizer(res)[3]
-    Omega_final = Optim.minimizer(res)[4]
-    omega_final = Optim.minimizer(res)[5]
-    M_final = Optim.minimizer(res)[6]
+    a_final = minimizer(result)[1]
+    e_final = minimizer(result)[2]
+    i_final = minimizer(result)[3]
+    Omega_final = minimizer(result)[4]
+    omega_final = minimizer(result)[5]
+    M_final = minimizer(result)[6]
     
     # Save orbital elements plots vs time
     original_orbital_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
@@ -260,7 +187,13 @@ function main()
     # Compute percentage error of the predicted orbit relative to the initial orbit 
     initial_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
     final_elements = [a_final, e_final, i_final, Omega_final, omega_final, M_final]
+    println(final_elements)
     compute_percentage_error(initial_elements, final_elements)
+    compute_mean_absolute_percentage_error(initial_elements, final_elements)
+
+    # Print number of usable photos
+    println("Total photos: " * string(total_photos))
+    println("Usable photos: " * string(usable_photos))
 
     # Compute pixel and 3D points from dimorphos as a result of the optimization
     x_pixel_fit_dimorphos, y_pixel_fit_dimorphos = propagate_and_compute_dimorphos_pixel_points(a_final, e_final, i_final, Omega_final, omega_final, M_final, start_time, end_time, step_size, spice_start_time)
@@ -269,12 +202,11 @@ function main()
     y_fit_dimorphos = dimorphos_fit_coordinates[:, 2]
     z_fit_dimorphos = dimorphos_fit_coordinates[:, 3]
     #scatter3d!(x_fit_dimorphos, y_fit_dimorphos, z_fit_dimorphos, color = "purple", markersize = 1, label = "Dimorphos (Final guess)")
-
-
+    
     # Plot 2D image simulation (camera plane)  
     plt_2d = scatter(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], label= "Didymos")
     scatter!(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], label = "Dimorphos")
-    scatter!(x_boundaries, y_boundaries, label = "Camera boundaries")
+    #scatter!(x_boundaries, y_boundaries, label = "Camera boundaries")
 
     # Plot image using pixels 
     plt_pixel = scatter(x_pixel_didymos, y_pixel_didymos, label = "Didymos")
@@ -295,6 +227,8 @@ load_hera_spice_kernels()
 # System properties
 G = 6.67430*10^-11
 mass_didymos = 5.32*10^11
+global radius_didymos = 390 # [m]
+global J2_didymos = 0.001
 global mass_dimorphos = 4.94*10^11
 global mu_system = G*(mass_didymos+mass_dimorphos)
 global c = 3.0*10^8
@@ -302,20 +236,27 @@ global enable_perturbation = true
 
 # Time properties
 hour = 3600.0
-number_of_steps = 1000
+number_of_orbits = 10
+# Photos to be taken 
+photos_per_orbit = 50
+global total_photos = photos_per_orbit * number_of_orbits
 global start_time = 0.0
-global end_time = 200*hour
-global step_size = (end_time-start_time)/number_of_steps
+global end_time = 120*hour
+global step_size = floor((end_time-start_time)/total_photos)
 global spice_start_time = utc2et("2027-02-25T08:14:58")
 global flux = 1358
 
 # Errors definition
 pixel_error = 2
-pixel_error_distribution = Uniform(0.0, pixel_error)
+pixel_error_distribution = Uniform(-pixel_error, pixel_error)
 global x_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
 global y_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
 global error_barycenter = 10/1000 # [km]
 global barycenter_error_distribution = Normal(0.0, error_barycenter)
+global pointing_error = deg2rad(6)
+global pointing_error_distribution = Normal(0.0, pointing_error)
+global random_error = rand(pointing_error_distribution, total_photos)
+global random_axis = rand(1:3, total_photos)
 
 main()
 
