@@ -297,6 +297,10 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
         camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
         camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Add pointing error 
+        pointing_error_matrix = error_rotation_matrix(random_error[iteration], random_axis[iteration])
+        camera_position_didymos[iteration, :] = pointing_error_matrix * didymos_coordinates[iteration, :]
+        camera_position_dimorphos[iteration, :] = pointing_error_matrix * dimorphos_coordinates[iteration, :]
         # Store pixel coordinates for Didymos and Dimorphos
         for j in 1:2
             didymos_pixel_coordinates[iteration, j] = focal_length*camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
@@ -305,12 +309,22 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         iteration += 1
     end
 
+    x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
     x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+
+    # Reject images where we cannot see one object 
+    for i in 1:length(x_pixel_didymos)
+        if ismissing(x_pixel_didymos[i]) || ismissing(x_pixel_dimorphos[i])
+            x_pixel_didymos[i] = missing
+            y_pixel_didymos[i] = missing
+            x_pixel_dimorphos[i] = missing
+            y_pixel_dimorphos[i] = missing
+        end
+    end
 
     # Add centroid pixel error
     x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
     y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
-
     return x_pixel_dimorphos, y_pixel_dimorphos
 end
 
