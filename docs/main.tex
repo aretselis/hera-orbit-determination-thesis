@@ -63,7 +63,7 @@ headsepline, % Uncomment to get a line under the header
 
 \usepackage[backend=bibtex,style=numeric,natbib=true]{biblatex} % Use the bibtex backend with the authoryear citation style (which resembles APA)
 
-\addbibresource{example.bib} % The filename of the bibliography
+\addbibresource{bibliography.bib} % The filename of the bibliography
 
 \usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
 
@@ -151,7 +151,7 @@ headsepline, % Uncomment to get a line under the header
  
 \vfill
 
-\large \textit{A thesis submitted in fulfillment of the requirements\\ for the Master of Science (MSc) degree in \degreename}\\[0.3cm] % University requirement text
+\large \textit{A thesis submitted in fulfillment of the requirements\\ for the Master of Science (MSc) in \degreename}\\[0.3cm] % University requirement text
 \textit{in the}\\[0.4cm]
 \facname\\\deptname\\[1cm] % Research group name and department name
  
@@ -205,7 +205,7 @@ headsepline, % Uncomment to get a line under the header
 %	ABSTRACT PAGE
 %----------------------------------------------------------------------------------------
 
-\begin{abstract}{\byname{} Asimakis \textsc{Anthopoulos} and Anastasios-Faidon \textsc{Retselis}}
+\begin{abstract}{\byname{}\authorname}
 \addchaptertocentry{\abstractname} % Add the abstract to the table of contents
 The number of small- and nano-satellites being launched into orbit is expected to continue to grow in the coming years. In order to avoid the creation of space debris, spacecraft developers have to take action in order to reduce the severity of space debris. A widely used guideline is to ensure that no space system is left in the Low Earth Orbit environment for more than 25 years after the end of mission. Given this guideline, this thesis investigates 1U, 2U and 3U CubeSats in Low Earth Orbit using the General Mission Analysis Tool (GMAT) in order to determine the maximum allowable value of the semi-major axis so that the 25 year limit is met. This analysis results in orbital decay diagrams which can be used by CubeSat developers in order to evaluate different orbits early in the design phase.
 
@@ -318,7 +318,7 @@ Firstly, we would like to thank our supervisors Prof. Georgios Voygiatzis and Pr
 % Include the chapters of the thesis as separate files from the Chapters folder
 % Uncomment the lines as you write the chapters
 
-%\include{Chapters/Chapter1}
+\include{Chapters/Chapter1}
 %\include{Chapters/Chapter3}
 %\include{Chapters/Chapter2} 
 %\include{Chapters/Chapter4} 
@@ -328,12 +328,12 @@ Firstly, we would like to thank our supervisors Prof. Georgios Voygiatzis and Pr
 %	THESIS CONTENT - APPENDICES
 %----------------------------------------------------------------------------------------
 
-%\appendix % Cue to tell LaTeX that the following "chapters" are Appendices
+\appendix % Cue to tell LaTeX that the following "chapters" are Appendices
 
 % Include the appendices of the thesis as separate files from the Appendices folder
 % Uncomment the lines as you write the Appendices
 
-%\include{Appendices/AppendixGMAT}
+\include{Appendices/AppendixSourceCode}
 %\include{Appendices/AppendixDecay}
 %\include{Appendices/AppendixMissionAnalysis}
 %\include{Appendices/AppendixMathematica}
