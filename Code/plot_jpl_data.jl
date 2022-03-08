@@ -10,7 +10,7 @@ function main()
     image = plot(df.Date[1:end_date_index], df.NEA[1:end_date_index], xlims=(minimum(df.Date[1:end_date_index]), maximum(df.Date[1:end_date_index])), xticks = ticks, widen=true, formatter=:plain, legend = :topleft, label = "Near-Earth Asteroids")
     plot!(image, df.Date[1:end_date_index], df."NEA-km"[1:end_date_index], label = "Near-Earth Asteroids (over 1 km)")
     plot!(image, df.Date[1:end_date_index], df."NEA-140m"[1:end_date_index], label = "Near-Earth Asteroids (over 140 m)")
-    plot!(image, df.Date[1:end_date_index], df.PHA[1:end_date_index], label= "Potential Hazardous Asteroids", xlabel = "Date", ylabel = "Number of objects")
+    plot!(image, df.Date[1:end_date_index], df.PHA[1:end_date_index], label= "Potentially Hazardous Asteroids", xlabel = "Date", ylabel = "Number of objects")
     #display(image)
     savefig(".\\Results\\jpl_nea_data.pdf")
 end
