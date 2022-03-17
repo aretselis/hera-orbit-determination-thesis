@@ -286,7 +286,7 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         for j in 1:3
             barycenter_coordinates[iteration, j] =  position_system_barycenter[j] + barycenter_offset[j]
             didymos_coordinates[iteration, j] =  position_didymos[j] + barycenter_offset[j]
-            dimorphos_coordinates[iteration, j] =  position_dimorphos[j] + barycenter_initial_coordinates[j]
+            dimorphos_coordinates[iteration, j] =  position_dimorphos[j] + barycenter_initial_coordinates[j] + barycenter_offset[j]
         end
         # Rotate HERA_AFC-1 camera reference frame assuming it is always tracking the barycenter
         rotation_matrix = compute_rotation_matrix(barycenter_coordinates[iteration, :], e_z)
@@ -323,8 +323,8 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     end
 
     # Add centroid pixel error
-    x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
-    y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
+    #x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
+    #y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
     return x_pixel_dimorphos, y_pixel_dimorphos
 end
 
