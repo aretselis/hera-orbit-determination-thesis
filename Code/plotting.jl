@@ -87,3 +87,32 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
     savefig(plt_M_vs_time, ".\\Results\\M_vs_time.pdf")
     return Nothing
 end
+
+
+function propagate_and_plot_xyz(OE_original)
+    # Dimorphos orbit
+    a_dimorphos = OE_original[1] # Semi-major axis
+    e_dimorphos = OE_original[2] # Eccentricity
+    i_dimorphos = OE_original[3] # Inclination
+    Omega_dimorphos = OE_original[4] # Argument of periapsis
+    omega_dimorphos = OE_original[5] # Longitude of the ascending node
+    M_dimorphos = OE_original[6] # Mean anomaly
+
+    # Compute initial position and velocity vector from orbital elements
+    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
+    x = r_vector[1]
+    y = r_vector[2]
+    z = r_vector[3]
+    vx = v_vector[1]
+    vy = v_vector[2]
+    vz = v_vector[3]
+
+    # Propagate Dimorphos
+    propagation_steps = 100000
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_steps, enable_perturbation)
+
+    plt_position = plot(t_vector, x_dimorphos, label= "x(t) original", xlabel = "Time, t, [seconds]", ylabel = "[m]")
+    plot!(plt_position, t_vector, y_dimorphos, label= "y(t) original", xlabel = "Time, t, [seconds]", ylabel = "[m]")
+    plot!(plt_position, t_vector, z_dimorphos, label= "z(t) original", xlabel = "Time, t, [seconds]", ylabel = " [m]")
+    display(plt_position)
+end
