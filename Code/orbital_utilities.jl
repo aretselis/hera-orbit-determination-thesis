@@ -57,29 +57,50 @@ function orbital_elements_to_cartesian(a, e, i, Omega, omega, M, mu)
     r_vector, v_vector
     =#
 
-    # Convert M to radians
-    M = deg2rad(M)
-    # Compute E using Newton-Raphson
-    E = eccentric_anomaly_calculator(M, e)
-    # Compute x, xdot, y, ydot on the orbital plane
-    x = a * (cos(E) - e)
-    y = a * sqrt(1 - e^2) * sin(E)
-    r = sqrt(x^2 + y^2)
-    n = sqrt(mu / (a^3))  # Mean motion
-    x_dot = -(n * a^2 / r) * sin(E)
-    y_dot = (n * a^2 / r) * sqrt(1 - e^2) * cos(E)
-    # Rotation Matrices definition
-    Omega = deg2rad(Omega)
-    omega = deg2rad(omega)
-    i = deg2rad(i)
-    P1 = [cos(omega) -sin(omega) 0;sin(omega) cos(omega) 0;0 0 1]
-    P2 = [1 0 0;0 cos(i) sin(i);0 sin(i) cos(i)]
-    P3 = [cos(Omega) -sin(Omega) 0;sin(Omega) cos(Omega) 0;0 0 1]
-    # Compute cartesian coordinates
-    x_y_vector = [x, y, 0]
-    x_y_dot_vector = [x_dot, y_dot, 0]
-    r_vector = *(*(*(P3, P2), P1), x_y_vector)
-    v_vector = *(*(*(P3, P2), P1), x_y_dot_vector)
+    if e < 10^-5
+        if i < 10^-5
+            # Circular equatorial orbit
+            Omega = 0.0
+            omega = 0.0
+            ni = M 
+        else
+            # Circular inclined orbit
+            omega = 0.0
+            ni = M
+        end
+        # In this case, p=a
+        r_pqw = [(a*cosd(ni))/(1+e*cosd(ni)); (a*sind(ni))/(1+e*cosd(ni)); 0.0]
+        v_pqw = [-sqrt(mu/a)*sind(ni); sqrt(mu/a)*(e+cosd(ni)); 0.0]
+        transformation = [cosd(Omega)*cosd(omega)-sind(Omega)*sind(omega)*cosd(i) -cosd(Omega)*sind(omega)-sind(Omega)*cosd(omega)*cosd(i) sind(Omega)*sind(i);
+                          sind(Omega)*cosd(omega)+cosd(Omega)*sind(omega)*cosd(i) -sind(Omega)*sind(omega)+cosd(Omega)*cosd(omega)*cosd(i) -cosd(Omega)*sind(i);
+                          sind(omega)*sind(i) cosd(omega)*sind(i) cosd(i)]
+        r_vector = transformation*r_pqw
+        v_vector = transformation*v_pqw
+    else
+        # Convert M to radians
+        M = deg2rad(M)
+        # Compute E using Newton-Raphson
+        E = eccentric_anomaly_calculator(M, e)
+        # Compute x, xdot, y, ydot on the orbital plane
+        x = a * (cos(E) - e)
+        y = a * sqrt(1 - e^2) * sin(E)
+        r = sqrt(x^2 + y^2)
+        n = sqrt(mu / (a^3))  # Mean motion
+        x_dot = -(n * a^2 / r) * sin(E)
+        y_dot = (n * a^2 / r) * sqrt(1 - e^2) * cos(E)
+        # Rotation Matrices definition
+        Omega = deg2rad(Omega)
+        omega = deg2rad(omega)
+        i = deg2rad(i)
+        P1 = [cos(omega) -sin(omega) 0;sin(omega) cos(omega) 0;0 0 1]
+        P2 = [1 0 0;0 cos(i) sin(i);0 sin(i) cos(i)]
+        P3 = [cos(Omega) -sin(Omega) 0;sin(Omega) cos(Omega) 0;0 0 1]
+        # Compute cartesian coordinates
+        x_y_vector = [x, y, 0]
+        x_y_dot_vector = [x_dot, y_dot, 0]
+        r_vector = *(*(*(P3, P2), P1), x_y_vector)
+        v_vector = *(*(*(P3, P2), P1), x_y_dot_vector)
+    end
     return r_vector, v_vector
 end 
 
@@ -105,33 +126,32 @@ function cartesian_to_orbital_elements(r_vector, v_vector, mu)
     v = sqrt(v_vector[1]^2 + v_vector[2]^2 + v_vector[3]^2)
     h_vector = cross(r_vector, v_vector)
     h = sqrt(h_vector[1]^2 + h_vector[2]^2 + h_vector[3]^2)
-    n_vector = cross([0,0,1], h_vector)
+    n_vector = cross([0.0,0.0,1.0], h_vector)
     n = sqrt(n_vector[1]^2 + n_vector[2]^2 + n_vector[3]^2)
     e_vector = (((v^2 - (mu/r))*r_vector) - (dot(r_vector,v_vector)*v_vector))/mu
     e = sqrt(e_vector[1]^2 + e_vector[2]^2 + e_vector[3]^2)
     ksi = ((v^2)/2) - (mu/r)
     a = - mu/(2*ksi)
-    i = acos(h_vector[3]/h)
-    Omega = acos(n_vector[1]/n)
+    i = acosd(h_vector[3]/h)
+    Omega = acosd(n_vector[1]/n)
     if n_vector[2] < 0
-        Omega = 2*pi - Omega
+        Omega = 360 - Omega
     end
-    omega = acos(dot(n_vector, e_vector)/(n*e))
+    omega = acosd(dot(n_vector, e_vector)/(n*e))
     if e_vector[3] < 0
-        omega = 2*pi - omega
+        omega = 360 - omega
     end
-    ni = acos(dot(e_vector, r_vector)/(e*r))
+    ni = acosd(dot(e_vector, r_vector)/(e*r))
     if dot(r_vector, v_vector) < 0
-        ni = 2*pi - ni
+        ni = 360 - ni
     end
-    M = atan((sqrt(1-e^2)*sin(ni)/(1+e*cos(ni))), (e+cos(ni))/(1+e*cos(ni))) - (e*(sqrt(1-e^2)*sin(ni)/(1+e*cos(ni))))  
-    # Convert to degrees
-    i = rad2deg(i)
-    Omega = rad2deg(Omega)
-    ni = rad2deg(ni)
-    omega = rad2deg(omega)
-    M = rad2deg(M)
-    return a, e, i, Omega, omega, M
+    lambda_true = acosd(r_vector[1]/r)
+    if r_vector[2] < 0
+        lambda_true = 360 - lambda_true
+    end
+    #M = atan((sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))), (e+cosd(ni))/(1+e*cosd(ni))) - (e*(sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))))  
+    #M = rad2deg(M)
+    return a, e, i, Omega, omega, lambda_true
 end
 
 
@@ -268,25 +288,18 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     iteration = 1
     for current_time in LinRange(start_time, end_time, total_photos)
         i = spice_start_time + current_time
-        position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
-        position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
-        rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
-        position_dimorphos = rotation_frame * dimorphos_coordinates[iteration, :]
+        position_didymos, lt = spkpos("-658030", i, "J2000", "None", "-999")
+        position_system_barycenter, lt = spkpos("2065803", i, "J2000", "None", "-999")          
+        position_dimorphos = dimorphos_coordinates[iteration, :]
         # Get didymos reference position or translate hera_coordinates
-        if iteration == 1
-            for j in 1:3
-                barycenter_initial_coordinates[j] = position_system_barycenter[j]
-            end
-        else
-            for j in 1:3
-                barycenter_offset[j] = barycenter_initial_coordinates[j] - position_system_barycenter[j]
-            end
+        for j in 1:3
+            barycenter_offset[j] = 0.0
         end
         # Apply offset to all coordinates
         for j in 1:3
-            barycenter_coordinates[iteration, j] =  position_system_barycenter[j] + barycenter_offset[j]
-            didymos_coordinates[iteration, j] =  position_didymos[j] + barycenter_offset[j]
-            dimorphos_coordinates[iteration, j] =  position_dimorphos[j] + barycenter_initial_coordinates[j] + barycenter_offset[j]
+            barycenter_coordinates[iteration, j] = position_system_barycenter[j] + barycenter_offset[j]
+            didymos_coordinates[iteration, j] = position_didymos[j] + barycenter_offset[j]
+            dimorphos_coordinates[iteration, j] = barycenter_coordinates[iteration, j] + position_dimorphos[j]
         end
         # Rotate HERA_AFC-1 camera reference frame assuming it is always tracking the barycenter
         rotation_matrix = compute_rotation_matrix(barycenter_coordinates[iteration, :], e_z)
@@ -322,9 +335,6 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         end
     end
 
-    # Add centroid pixel error
-    #x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
-    #y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
     return x_pixel_dimorphos, y_pixel_dimorphos
 end
 
@@ -375,25 +385,24 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     iteration = 1
     for current_time in LinRange(start_time, end_time, total_photos)
         i = spice_start_time + current_time
-        position_didymos, lt = spkpos("-658030", i, "HERA_AFC-1", "None", "-999")
-        position_system_barycenter, lt = spkpos("2065803", i, "HERA_AFC-1", "None", "-999")          
-        rotation_frame = pxform("J2000", "HERA_SPACECRAFT", i)
-        position_dimorphos = rotation_frame * dimorphos_coordinates[iteration, :]
+        position_didymos, lt = spkpos("-658030", i, "J2000", "None", "-999")
+        position_system_barycenter, lt = spkpos("2065803", i, "J2000", "None", "-999")          
+        position_dimorphos = dimorphos_coordinates[iteration, :]
         # Get didymos reference position or translate hera_coordinates
-        if iteration == 1
-            for j in 1:3
-                barycenter_initial_coordinates[j] = position_system_barycenter[j]
+        for j in 1:3
+            barycenter_offset[j] = barycenter_initial_coordinates[j] - position_system_barycenter[j] + rand(barycenter_error_distribution) + rand(hera_error_distribution)
             end
-        else
-            for j in 1:3
-                barycenter_offset[j] = barycenter_initial_coordinates[j] - position_system_barycenter[j]
-            end
+        # Apply offset to all coordinates
+        for j in 1:3
+            barycenter_coordinates[iteration, j] = position_system_barycenter[j] + barycenter_offset[j]
+            didymos_coordinates[iteration, j] = position_didymos[j]
+            dimorphos_coordinates[iteration, j] = barycenter_coordinates[iteration, j] + position_dimorphos[j]
         end
         # Apply offset to all coordinates
         for j in 1:3
-            barycenter_coordinates[iteration, j] =  position_system_barycenter[j] + barycenter_offset[j]
-            didymos_coordinates[iteration, j] =  position_didymos[j] + barycenter_offset[j]
-            dimorphos_coordinates[iteration, j] =  position_dimorphos[j] + barycenter_initial_coordinates[j]
+            barycenter_coordinates[iteration, j] = position_system_barycenter[j]
+            didymos_coordinates[iteration, j] = position_didymos[j]
+            dimorphos_coordinates[iteration, j] = barycenter_coordinates[iteration, j] + position_dimorphos[j]
         end
         # Rotate HERA_AFC-1 camera reference frame assuming it is always tracking the barycenter
         rotation_matrix = compute_rotation_matrix(barycenter_coordinates[iteration, :], e_z)
