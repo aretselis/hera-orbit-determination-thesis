@@ -1,11 +1,34 @@
 function residuals(orbit)
-    # Select elements
-    a = orbit[1]
-    e = orbit[2]
-    i = orbit[3]
-    Omega = orbit[4]
-    omega = orbit[5]
-    M = orbit[6]
+    # Select elements based on orbit type
+    if dimorphos_orbit_type == "Normal"
+        a = orbit[1]
+        e = orbit[2]
+        i = orbit[3]
+        Omega = orbit[4]
+        omega = orbit[5]
+        M = orbit[6]
+    elseif dimorphos_orbit_type == "EEO"
+        a = orbit[1]
+        e = orbit[2]
+        i = orbit[3]
+        Omega = Omega_dimorphos
+        omega = orbit[4]
+        M = orbit[5]
+    elseif dimorphos_orbit_type == "CIO"
+        a = orbit[1]
+        e = orbit[2]
+        i = orbit[3]
+        Omega = orbit[4]
+        omega = omega_dimorphos
+        M = orbit[5]
+    else
+        a = orbit[1]
+        e = orbit[2]
+        i = orbit[3]
+        Omega = Omega_dimorphos
+        omega = omega_dimorphos
+        M = orbit[4]
+    end
     # Compute dimorphos pixel points for given orbit and compute xhi2
     observed_x, observed_y = x_pixel_dimorphos, y_pixel_dimorphos
     predicted_x, predicted_y = propagate_and_compute_dimorphos_pixel_points(a, e, i, Omega, omega, M, start_time, end_time, step_size, spice_start_time)

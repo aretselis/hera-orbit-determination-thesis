@@ -42,7 +42,7 @@ function eccentric_anomaly_calculator(mean_anomaly, e)
 end
 
 
-function orbital_elements_to_cartesian(a, e, i, Omega, omega, M, mu)
+function orbital_elements_to_cartesian(a, e, i, Omega, omega, ni, mu)
     #=
     Computes cartesian position and velocity vector given some orbital elements
     Input:
@@ -51,38 +51,35 @@ function orbital_elements_to_cartesian(a, e, i, Omega, omega, M, mu)
     i [deg]
     Omega [deg]
     omega [deg]
-    M [deg]
+    ni [deg]
     mu [m^3/(kg*s^2)] (GM)
     Output:
     r_vector, v_vector
     =#
 
     if e < 10^-5
-        if i < 10^-5
+        if i < 10^-1
             # Circular equatorial orbit
             Omega = 0.0
-            omega = 0.0
-            ni = M 
+            omega = 0.0 
         else
             # Circular inclined orbit
             omega = 0.0
-            ni = M
         end
         # In this case, p=a
         p = a
     else
-        if i < 10^-5 
+        if i < 10^-1
             # Elliptical equatorial orbit
             Omega = 0.0
         end
-        ni = M
         p = a*(1-e^2)
     end
     r_pqw = [(p*cosd(ni))/(1+e*cosd(ni)); (p*sind(ni))/(1+e*cosd(ni)); 0.0]
     v_pqw = [-sqrt(mu/p)*sind(ni); sqrt(mu/p)*(e+cosd(ni)); 0.0]
     transformation = [cosd(Omega)*cosd(omega)-sind(Omega)*sind(omega)*cosd(i) -cosd(Omega)*sind(omega)-sind(Omega)*cosd(omega)*cosd(i) sind(Omega)*sind(i);
-                          sind(Omega)*cosd(omega)+cosd(Omega)*sind(omega)*cosd(i) -sind(Omega)*sind(omega)+cosd(Omega)*cosd(omega)*cosd(i) -cosd(Omega)*sind(i);
-                          sind(omega)*sind(i) cosd(omega)*sind(i) cosd(i)]
+                      sind(Omega)*cosd(omega)+cosd(Omega)*sind(omega)*cosd(i) -sind(Omega)*sind(omega)+cosd(Omega)*cosd(omega)*cosd(i) -cosd(Omega)*sind(i);
+                      sind(omega)*sind(i) cosd(omega)*sind(i) cosd(i)]
     r_vector = transformation*r_pqw
     v_vector = transformation*v_pqw
     return r_vector, v_vector
@@ -117,46 +114,43 @@ function cartesian_to_orbital_elements(r_vector, v_vector, mu)
     ksi = ((v^2)/2) - (mu/r)
     a = - mu/(2*ksi)
     i = acosd(h_vector[3]/h)
+    current_orbit = dimorphos_orbit_type
     Omega = acosd(n_vector[1]/n)
     if n_vector[2] < 0
         Omega = 360 - Omega
     end
-    omega = acosd(dot(n_vector, e_vector)/(n*e))
-    if e_vector[3] < 0
-        omega = 360 - omega
+    if current_orbit == "EEO"
+        omega = acosd(e_vector[1]/e)
+        if e_vector[2] < 0
+            omega = 360 - omega
+        end
+    else
+        omega = acosd(dot(n_vector, e_vector)/(n*e))
+        if e_vector[3] < 0
+            omega = 360 - omega
+        end
     end
-    ni = acosd(dot(e_vector, r_vector)/(e*r))
-    if dot(r_vector, v_vector) < 0
-        ni = 360 - ni
+    if current_orbit == "CIO"
+        u = acosd(dot(n_vector, r_vector)/(n*r))
+        if r_vector[3] < 0
+            u = 360 - u
+        end
+        return a, e, i, Omega, omega, u
+    elseif current_orbit == "CEO"
+        lambda_true = acosd(r_vector[1]/r)
+        if r_vector[2] < 0
+            lambda_true = 360 - lambda_true
+        end
+        return a, e, i, Omega, omega, lambda_true
+    else
+        ni = acosd(dot(e_vector, r_vector)/(e*r))
+        if dot(r_vector, v_vector) < 0
+            ni = 360 - ni
+        end
+        M = atan((sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))), (e+cosd(ni))/(1+e*cosd(ni))) - (e*(sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))))  
+        M = rad2deg(M)
+        return a, e, i, Omega, omega, M
     end
-    lambda_true = acosd(r_vector[1]/r)
-    if r_vector[2] < 0
-        lambda_true = 360 - lambda_true
-    end
-    #M = atan((sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))), (e+cosd(ni))/(1+e*cosd(ni))) - (e*(sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))))  
-    #M = rad2deg(M)
-    return a, e, i, Omega, omega, lambda_true
-end
-
-
-function orbit_evolution_and_cartesian_transform(a, e, i, n, po, tau, GM, time)
-    #=
-    Computes the orbit at the specified time step_size
-    INPUT:
-    a, e, i, n, po, tau: Orbital elements
-    GM: GM of the System
-    time: desired time step
-    =#
-    # Calculate perihelion distance
-    q = a*abs(1.0-e)
-    # Calculate longitude of pericenter
-    p = n + po
-    # Calculate mean motion
-    nu = sqrt(GM)*a^(-1.5)
-    # Calculate mean anomaly
-    L = nu*(time-tau)
-    # Compute orbit vectors
-    x, y, z, v_x, v_y, v_z = mco_el2x
 end
 
 
@@ -405,4 +399,27 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
         iteration += 1
     end
     return dimorphos_coordinates
+end
+
+
+function type_of_orbit(e, i)
+    # Returns orbit type given eccentricity and inclination
+    if e < 10^-5
+        if i < 10^-1
+            # Circular equatorial orbit
+            answer = "CEO"
+        else
+            # Circular inclined orbit
+            answer = "CIO"
+        end
+    else
+        if i < 10^-1 
+            # Elliptical equatorial orbit
+            answer = "EEO"
+        else 
+            # Normal orbit
+            answer = "Normal"
+        end
+    end
+    return answer
 end
