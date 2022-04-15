@@ -140,7 +140,7 @@ function main()
 
     # Compute coordinates in pixels
     x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
-    global x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
+    x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
     x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
 
     # Reject images where we cannot see one object 
@@ -155,8 +155,11 @@ function main()
     usable_photos = length(collect(skipmissing(x_pixel_dimorphos)))
 
     # Add centroid pixel error
-    x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
-    y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
+    global x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
+    global y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
+
+    minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos M_dimorphos])
+    println("Minimum error is " *string(minimum_error)* " pixels")
 
     # Perform orbit determination
     if dimorphos_orbit_type == "Normal"
@@ -164,7 +167,7 @@ function main()
         bounds = [1190.0-30 0.0001 0.0 0.0 0.0 0.0; 
                   1190.0+30 0.1 90.0 359.99 359.99 359.99]
         # Minimize square mean error to find best orbital elements
-        result = optimize(circular_residuals, bounds, ECA(options = Options(debug=true, iterations=100)))
+        result = optimize(residuals, bounds, ECA(options = Options(debug=true, iterations=100)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -213,7 +216,7 @@ function main()
         # Bounds for optimization
         bounds = [1190.0-30 0.00000001 0.001 0.0;
                   1190.0+30 0.00001 0.1 359.99]
-        result = optimize(residuals, bounds, ECA(options = Options(debug=true, iterations=50)))
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -254,10 +257,14 @@ function main()
     # Plot image using pixels 
     plt_pixel = scatter(x_pixel_didymos, y_pixel_didymos, label = "Didymos")
     scatter!(x_pixel_dimorphos, y_pixel_dimorphos, label = "Dimorphos")
-    scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
+    #scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
     scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
 
-    display(plt_3d)
+    # Plot performance
+    f_calls, best_f_values = convergence(result)
+    plt_performance = plot(1:length(f_calls), best_f_values, xlabel="Generation", ylabel="Residuals_value", label="ECA", yaxis=:log)
+
+    display(plt_performance)
 end
 
 function cb(os)
@@ -279,14 +286,14 @@ global enable_perturbation = true
 
 # Time properties
 hour = 3600.0
-number_of_orbits = 10
+number_of_orbits = 25
 # Photos to be taken 
-photos_per_orbit = 50
+photos_per_orbit = 40
 global total_photos = photos_per_orbit * number_of_orbits
 global start_time = 0.0
-global end_time = 120*hour
+global end_time = 300*hour
 global step_size = floor((end_time-start_time)/total_photos)
-global spice_start_time = utc2et("2027-01-28T08:14:58")
+global spice_start_time = utc2et("2027-02-28T08:14:58")
 global flux = 1358
 
 # Errors definition
