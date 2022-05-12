@@ -233,14 +233,18 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     # Propagate Dimorphos
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
     # Select every xth element to match the photos taken
-    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
-    x_dimorphos = x_dimorphos[1:photo_selector:end]
-    y_dimorphos = y_dimorphos[1:photo_selector:end]
-    z_dimorphos = z_dimorphos[1:photo_selector:end]
-    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
-    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
-    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
-    t_vector = t_vector[1:photo_selector:end]
+    photo_selector = LinRange(1, length(x_dimorphos), total_photos)
+    index_vector = zeros(Int64, total_photos)
+    for i = 1:length(index_vector)
+        index_vector[i] = floor(Int64, photo_selector[i])
+    end
+    x_dimorphos = x_dimorphos[index_vector]
+    y_dimorphos = y_dimorphos[index_vector]
+    z_dimorphos = z_dimorphos[index_vector]
+    vx_dimorphos = vx_dimorphos[index_vector]
+    vy_dimorphos = vy_dimorphos[index_vector]
+    vz_dimorphos = vz_dimorphos[index_vector]
+    t_vector = t_vector[index_vector]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
@@ -284,10 +288,6 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         barycenter_coordinates[iteration, :] = rotation_matrix * barycenter_coordinates[iteration, :]
         didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
         dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
-        # Rotate Didymos-Dimorphos points
-        rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
-        camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
-        camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
         # Add pointing error 
         pointing_error_matrix = error_rotation_matrix(random_error[iteration], random_axis[iteration])
         camera_position_didymos[iteration, :] = pointing_error_matrix * didymos_coordinates[iteration, :]
@@ -330,14 +330,18 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     # Propagate Dimorphos
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
     # Select every xth element to match the photos taken
-    photo_selector = Int64(round((size(x_dimorphos)[1]-1)/total_photos))
-    x_dimorphos = x_dimorphos[1:photo_selector:end]
-    y_dimorphos = y_dimorphos[1:photo_selector:end]
-    z_dimorphos = z_dimorphos[1:photo_selector:end]
-    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
-    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
-    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
-    t_vector = t_vector[1:photo_selector:end]
+    photo_selector = LinRange(1, length(x_dimorphos), total_photos)
+    index_vector = zeros(Int64, total_photos)
+    for i = 1:length(index_vector)
+        index_vector[i] = floor(Int64, photo_selector[i])
+    end
+    x_dimorphos = x_dimorphos[index_vector]
+    y_dimorphos = y_dimorphos[index_vector]
+    z_dimorphos = z_dimorphos[index_vector]
+    vx_dimorphos = vx_dimorphos[index_vector]
+    vy_dimorphos = vy_dimorphos[index_vector]
+    vz_dimorphos = vz_dimorphos[index_vector]
+    t_vector = t_vector[index_vector]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
@@ -368,18 +372,12 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
         position_dimorphos = dimorphos_coordinates[iteration, :]
         # Get didymos reference position or translate hera_coordinates
         for j in 1:3
-            barycenter_offset[j] = barycenter_initial_coordinates[j] - position_system_barycenter[j] + rand(barycenter_error_distribution) + rand(hera_error_distribution)
-            end
-        # Apply offset to all coordinates
-        for j in 1:3
-            barycenter_coordinates[iteration, j] = position_system_barycenter[j] + barycenter_offset[j]
-            didymos_coordinates[iteration, j] = position_didymos[j]
-            dimorphos_coordinates[iteration, j] = barycenter_coordinates[iteration, j] + position_dimorphos[j]
+            barycenter_offset[j] = rand(barycenter_error_distribution) + rand(hera_error_distribution)
         end
         # Apply offset to all coordinates
         for j in 1:3
-            barycenter_coordinates[iteration, j] = position_system_barycenter[j]
-            didymos_coordinates[iteration, j] = position_didymos[j]
+            barycenter_coordinates[iteration, j] = position_system_barycenter[j] + barycenter_offset[j]
+            didymos_coordinates[iteration, j] = position_didymos[j] + barycenter_offset[j]
             dimorphos_coordinates[iteration, j] = barycenter_coordinates[iteration, j] + position_dimorphos[j]
         end
         # Rotate HERA_AFC-1 camera reference frame assuming it is always tracking the barycenter
@@ -387,10 +385,10 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
         barycenter_coordinates[iteration, :] = rotation_matrix * barycenter_coordinates[iteration, :]
         didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
         dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
-        # Rotate Didymos-Dimorphos points
-        rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
-        camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
-        camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
+        # Add pointing error 
+        pointing_error_matrix = error_rotation_matrix(random_error[iteration], random_axis[iteration])
+        camera_position_didymos[iteration, :] = pointing_error_matrix * didymos_coordinates[iteration, :]
+        camera_position_dimorphos[iteration, :] = pointing_error_matrix * dimorphos_coordinates[iteration, :]
         # Store pixel coordinates for Didymos and Dimorphos
         for j in 1:2
             didymos_pixel_coordinates[iteration, j] = focal_length*camera_position_didymos[iteration, j]/camera_position_didymos[iteration, 3]
