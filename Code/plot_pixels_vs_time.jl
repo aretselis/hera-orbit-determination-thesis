@@ -25,83 +25,101 @@ function main(original, fitted)
     M_fitted = fitted[6] 
 
     # Get pixel points with no errors (original orbit)
-    current_error = false
-    x_didymos_no_error, y_didymos_no_error, x_dimorphos_no_error, y_dimorphos_no_error, time = propagate_and_compute_pixel_points(a_original, e_original, i_original, Omega_original, omega_original, M_original, current_error)
+    current_error = 0
+    x_didymos_no_error, y_didymos_no_error, x_dimorphos_no_error, y_dimorphos_no_error = propagate_and_compute_pixel_points(a_original, e_original, i_original, Omega_original, omega_original, M_original, current_error)
 
     # Get pixel points with errors (original orbit)
-    current_error = true
-    x_didymos_error, y_didymos_error, x_dimorphos_error, y_dimorphos_error, time = propagate_and_compute_pixel_points(a_original, e_original, i_original, Omega_original, omega_original, M_original, current_error)
+    current_error = 1
+    x_didymos_error, y_didymos_error, x_dimorphos_error, y_dimorphos_error = propagate_and_compute_pixel_points(a_original, e_original, i_original, Omega_original, omega_original, M_original, current_error)
 
     # Get pixel points with errors (fitted orbit)
-    current_error = true
-    x_didymos_fitted_error, y_didymos_fitted_error, x_dimorphos_fitted_error, y_dimorphos_fitted_error, time = propagate_and_compute_pixel_points(a_fitted, e_fitted, i_fitted, Omega_fitted, omega_fitted, M_fitted, current_error)
+    current_error = 2
+    x_didymos_fitted_error, y_didymos_fitted_error, x_dimorphos_fitted_error, y_dimorphos_fitted_error = propagate_and_compute_pixel_points(a_fitted, e_fitted, i_fitted, Omega_fitted, omega_fitted, M_fitted, current_error)
 
     # Plot image 
-    plotlyjs()
-    plot_x_pixels = scatter(time, x_didymos_no_error, label = "Didymos (without error)")
-    scatter!(plot_x_pixels, time, x_didymos_error, label = "Didymos (with error)")
-    #scatter!(plot_x_pixels, time, x_fitted_error, label = "Fitted (with error)")
+    pgfplotsx()
+    # X pixel didymos
+    plot_x_pixels_didymos = scatter(x_didymos_no_error, label = "Didymos (without error)", xlabel = "Number of photograph", ylabel = "X pixel coordinate")
+    scatter!(plot_x_pixels_didymos, x_didymos_error, label = "Didymos (with error)")
+    # Y pixel didymos
+    plot_y_pixels_didymos = scatter(y_didymos_no_error, label = "Didymos (without error)", xlabel = "Number of photograph", ylabel = "Y pixel coordinate")
+    scatter!(plot_y_pixels_didymos, y_didymos_error, label = "Didymos (with error)")
+    # X pixel dimorphos
+    plot_x_pixels_dimorphos = scatter(x_dimorphos_no_error, label = "Dimorphos (without error)", xlabel = "Number of photograph", ylabel = "X pixel coordinate")
+    scatter!(plot_x_pixels_dimorphos, x_dimorphos_error, label = "Dimorphos (with error)")
+    scatter!(plot_x_pixels_dimorphos, x_dimorphos_fitted_error, label = "Dimorphos (fitted)")
+    # Y pixel dimorphos
+    plot_y_pixels_dimorphos = scatter(y_dimorphos_no_error, label = "Dimorphos (without error)", xlabel = "Number of photograph", ylabel = "Y pixel coordinate", widen=true, formatter=:plain, legend = :topright)
+    scatter!(plot_y_pixels_dimorphos, y_dimorphos_error, label = "Dimorphos (with error)")
+    scatter!(plot_y_pixels_dimorphos, y_dimorphos_fitted_error, label = "Dimorphos (fitted)")   
 
-    display(plot_x_pixels)
+    savefig(plot_x_pixels_didymos, ".\\Results\\x_pixels_didymos_vs_time.pdf")
+    savefig(plot_y_pixels_didymos, ".\\Results\\y_pixels_didymos_vs_time.pdf")
+    savefig(plot_x_pixels_dimorphos, ".\\Results\\x_pixels_dimorphos_vs_time.pdf")
+    savefig(plot_y_pixels_dimorphos, ".\\Results\\y_pixels_dimorphos_vs_time.pdf")
+    display(plot_x_pixels_didymos)
 end
 
 function propagate_and_compute_pixel_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, error)
-        # Compute initial position and velocity vector from orbital elements
-        r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
-        x = r_vector[1]
-        y = r_vector[2]
-        z = r_vector[3]
-        vx = v_vector[1]
-        vy = v_vector[2]
-        vz = v_vector[3]
+    # Compute initial position and velocity vector from orbital elements
+    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos,i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
+    x = r_vector[1]
+    y = r_vector[2]
+    z = r_vector[3]
+    vx = v_vector[1]
+    vy = v_vector[2]
+    vz = v_vector[3]
     
-        # Propagate Dimorphos
-        x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
-        # Select every xth element to match the photos taken and convert to km
-        photo_selector = Int64(floor((length(x_dimorphos)-1)/total_photos))
-        x_dimorphos = x_dimorphos[1:photo_selector:end]
-        y_dimorphos = y_dimorphos[1:photo_selector:end]
-        z_dimorphos = z_dimorphos[1:photo_selector:end]
-        vx_dimorphos = vx_dimorphos[1:photo_selector:end]
-        vy_dimorphos = vy_dimorphos[1:photo_selector:end]
-        vz_dimorphos = vz_dimorphos[1:photo_selector:end]
-        t_vector = t_vector[1:photo_selector:end]
-        dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
+    # Propagate Dimorphos
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos,vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system,start_time, end_time, total_photos, enable_perturbation)
+    # Select every xth element to match the photos taken and convert to km
+    photo_selector = LinRange(1, length(x_dimorphos), total_photos)
+    index_vector = zeros(Int64, total_photos)
+    for i in 1:length(index_vector)
+        index_vector[i] = floor(Int64, photo_selector[i])
+    end
+    x_dimorphos = x_dimorphos[index_vector]
+    y_dimorphos = y_dimorphos[index_vector]
+    z_dimorphos = z_dimorphos[index_vector]
+    vx_dimorphos = vx_dimorphos[index_vector]
+    vy_dimorphos = vy_dimorphos[index_vector]
+    vz_dimorphos = vz_dimorphos[index_vector]
+    t_vector = t_vector[index_vector]
+    dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
     
-        # Orbit start and end time (for SPICE)
-        spice_end_time = spice_start_time + end_time
+    # Orbit start and end time (for SPICE)
+    spice_end_time = spice_start_time + end_time
     
-        # Initialize position arrays (x, y, z)
-        didymos_coordinates = zeros(Float64, total_photos, 3)
-        barycenter_coordinates = zeros(Float64, total_photos, 3)
-        barycenter_offset = zeros(Float64, 3)
-        barycenter_initial_coordinates = zeros(Float64, 3)
-        camera_position_didymos = zeros(Float64, total_photos, 3)
-        camera_position_dimorphos = zeros(Float64, total_photos, 3)
-        didymos_pixel_coordinates = zeros(Float64, total_photos, 2)
-        dimorphos_pixel_coordinates = zeros(Float64, total_photos, 2)
-        t_vector = LinRange(start_time, end_time, total_photos)
+    # Initialize position arrays (x, y, z)
+    didymos_coordinates = zeros(Float64, total_photos, 3)
+    barycenter_coordinates = zeros(Float64, total_photos, 3)
+    barycenter_offset = zeros(Float64, 3)
+    barycenter_initial_coordinates = zeros(Float64, 3)
+    camera_position_didymos = zeros(Float64, total_photos, 3)
+    camera_position_dimorphos = zeros(Float64, total_photos, 3)
+    didymos_pixel_coordinates = zeros(Float64, total_photos, 2)
+    dimorphos_pixel_coordinates = zeros(Float64, total_photos, 2)
     
-        # HERA_AFC-1 coordinate system unit vectors
-        e_x = [1.0, 0.0, 0.0]
-        e_y = [0.0, 1.0, 0.0]
-        e_z = [0.0, 0.0, 1.0]
+    # HERA_AFC-1 coordinate system unit vectors
+    e_x = [1.0, 0.0, 0.0]
+    e_y = [0.0, 1.0, 0.0]
+    e_z = [0.0, 0.0, 1.0]
     
-        # Main SPICE calculations loop
-        focal_length = 10.6*10^-5 # [km]
-        iteration = 1
-        println("\nSPICE calculations:")
-        for current_time in ProgressBar(LinRange(start_time, end_time, total_photos))
+    # Main SPICE calculations loop
+    focal_length = 10.6*10^-5 # [km]
+    iteration = 1
+    println("\nSPICE calculations:")
+    for current_time in ProgressBar(LinRange(start_time, end_time, total_photos))
             i = spice_start_time + current_time
             position_didymos, lt = spkpos("-658030", i, "J2000", "None", "-999")
             position_system_barycenter, lt = spkpos("2065803", i, "J2000", "None", "-999")          
             position_dimorphos = dimorphos_coordinates[iteration, :]
             # Get didymos reference position or translate hera_coordinates
             for j in 1:3
-                if error == true
+                if error == 1
                     barycenter_offset[j] = rand(barycenter_error_distribution) + rand(hera_error_distribution)
                 else 
-                    barycenter_offset[j] = 0 
+                    barycenter_offset[j] = 0
                 end
             end
             # Apply offset to all coordinates
@@ -116,7 +134,7 @@ function propagate_and_compute_pixel_points(a_dimorphos, e_dimorphos, i_dimorpho
             didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
             dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
             # Add pointing error 
-            if error == true
+            if (error == 1 || error == 2)
                 pointing_error_matrix = error_rotation_matrix(random_error[iteration], random_axis[iteration])
                 camera_position_didymos[iteration, :] = pointing_error_matrix * didymos_coordinates[iteration, :]
                 camera_position_dimorphos[iteration, :] = pointing_error_matrix * dimorphos_coordinates[iteration, :]
@@ -165,22 +183,12 @@ function propagate_and_compute_pixel_points(a_dimorphos, e_dimorphos, i_dimorpho
         x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
         x_pixel_boundaries, y_pixel_boundaries = convert_to_pixels(x_boundaries,y_boundaries, x_boundaries, y_boundaries)
     
-        # Reject images where we cannot see one object 
-        for i in 1:length(x_pixel_didymos)
-            if ismissing(x_pixel_didymos[i]) || ismissing(x_pixel_dimorphos[i])
-                x_pixel_didymos[i] = missing
-                y_pixel_didymos[i] = missing
-                x_pixel_dimorphos[i] = missing
-                y_pixel_dimorphos[i] = missing
-            end
-        end
-    
         # Add centroid pixel error
-        if error == true 
+        if error == 1
             x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
             y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
         end
-        return x_pixel_didymos, y_pixel_didymos, x_pixel_dimorphos, y_pixel_dimorphos, t_vector
+        return x_pixel_didymos, y_pixel_didymos, x_pixel_dimorphos, y_pixel_dimorphos
     end
 
 load_hera_spice_kernels()
