@@ -33,14 +33,18 @@ function main()
     # Propagate Dimorphos
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
     # Select every xth element to match the photos taken and convert to km
-    photo_selector = Int64(floor((length(x_dimorphos)-1)/total_photos))
-    x_dimorphos = x_dimorphos[1:photo_selector:end]
-    y_dimorphos = y_dimorphos[1:photo_selector:end]
-    z_dimorphos = z_dimorphos[1:photo_selector:end]
-    vx_dimorphos = vx_dimorphos[1:photo_selector:end]
-    vy_dimorphos = vy_dimorphos[1:photo_selector:end]
-    vz_dimorphos = vz_dimorphos[1:photo_selector:end]
-    t_vector = t_vector[1:photo_selector:end]
+    photo_selector = LinRange(1, length(x_dimorphos), total_photos)
+    index_vector = zeros(Int64, total_photos)
+    for i = 1:length(index_vector)
+        index_vector[i] = floor(Int64, photo_selector[i])
+    end
+    x_dimorphos = x_dimorphos[index_vector]
+    y_dimorphos = y_dimorphos[index_vector]
+    z_dimorphos = z_dimorphos[index_vector]
+    vx_dimorphos = vx_dimorphos[index_vector]
+    vy_dimorphos = vy_dimorphos[index_vector]
+    vz_dimorphos = vz_dimorphos[index_vector]
+    t_vector = t_vector[index_vector]
     dimorphos_coordinates = hcat(x_dimorphos/1000, y_dimorphos/1000, z_dimorphos/1000)
 
     # Orbit start and end time (for SPICE)
@@ -85,10 +89,6 @@ function main()
         barycenter_coordinates[iteration, :] = rotation_matrix * barycenter_coordinates[iteration, :]
         didymos_coordinates[iteration, :] =  rotation_matrix * didymos_coordinates[iteration, :]
         dimorphos_coordinates[iteration, :] =  rotation_matrix * dimorphos_coordinates[iteration, :]
-        # Rotate Didymos-Dimorphos points
-        rotation_matrix = compute_rotation_matrix(e_z, barycenter_coordinates[iteration, :])
-        camera_position_didymos[iteration, :] = rotation_matrix * didymos_coordinates[iteration, :]
-        camera_position_dimorphos[iteration, :] = rotation_matrix * dimorphos_coordinates[iteration, :]
         # Add pointing error 
         pointing_error_matrix = error_rotation_matrix(random_error[iteration], random_axis[iteration])
         camera_position_didymos[iteration, :] = pointing_error_matrix * didymos_coordinates[iteration, :]
@@ -152,15 +152,15 @@ function main()
             y_pixel_dimorphos[i] = missing
         end
     end
-    usable_photos = length(collect(skipmissing(x_pixel_dimorphos)))
 
     # Add centroid pixel error
     global x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
     global y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
 
+    usable_photos = length(collect(skipmissing(x_pixel_dimorphos)))
     minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos M_dimorphos])
     println("Minimum error is " *string(minimum_error)* " pixels")
-
+    
     # Perform orbit determination
     if dimorphos_orbit_type == "Normal"
         # Full OD problem, 6 orbital elements
@@ -267,19 +267,16 @@ function main()
     display(plt_performance)
 end
 
-function cb(os)
-    println(os.metadata)
-    return false    
-end
-
 load_hera_spice_kernels()
 
 # System properties
 G = 6.67430*10^-11
-mass_didymos = 5.32*10^11
+mass_error = 0.02 # in percentage
+mass_error_distribution = Uniform(-mass_error, mass_error)
+mass_didymos = 5.32*10^11 + rand(mass_error_distribution)*5.32*10^11
 global radius_didymos = 390 # [m]
 global J2_didymos = 0.011432722
-global mass_dimorphos = 4.94*10^9
+global mass_dimorphos = 4.94*10^9  + rand(mass_error_distribution)*4.94*10^9
 global mu_system = G*(mass_didymos+mass_dimorphos)
 global c = 3.0*10^8
 global enable_perturbation = true
@@ -307,8 +304,8 @@ global error_hera_position = 10/1000 # [km]
 global hera_error_distribution = Normal(0.0, error_hera_position)
 global pointing_error = deg2rad(1)
 global pointing_error_distribution = Normal(0.0, pointing_error)
-global random_error = zeros(total_photos) #rand(pointing_error_distribution, total_photos)
-global random_axis = rand(1:3, total_photos)
+global random_error = rand(pointing_error_distribution, total_photos)
+global random_axis = rand(1:2, total_photos)
 
 main()
 
