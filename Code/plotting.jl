@@ -116,3 +116,27 @@ function propagate_and_plot_xyz(OE_original)
     plot!(plt_position, t_vector, z_dimorphos, label= "z(t) original", xlabel = "Time, t, [seconds]", ylabel = " [m]")
     display(plt_position)
 end
+
+
+function plot_accuracy_vs_photo_analysis(photo_vector)
+    # TODO: correctly generate accuracy_array in accuracy_vs_photos_analysis.jl
+    accuracy_array =  load("C:\\Users\\retse\\repos\\hera-orbit-determination\\Results\\accuracy_array.jld")["accuracy_array"]
+    number_of_runs = size(accuracy_array)[1] - 1
+    a_error_vector = zeros(Float64, number_of_runs)
+    e_error_vector = zeros(Float64, number_of_runs)
+    i_error_vector = zeros(Float64, number_of_runs)
+    M_error_vector = zeros(Float64, number_of_runs)
+    for i=1:9
+        a_error_vector[i] = accuracy_array[i, 1]
+        e_error_vector[i] = accuracy_array[i, 2]
+        i_error_vector[i] = accuracy_array[i, 3]
+        M_error_vector[i] = accuracy_array[i, 6]
+    end
+    pgfplotsx()
+    accuracy_plot = plot(photo_vector, a_error_vector, xaxis=:log, label = "a", xlabel = "Number of photos used", ylabel = "Mean Absolute Performance Error [%]")
+    plot!(photo_vector, e_error_vector, xaxis=:log, label = "e")
+    #plot!(photo_vector, i_error_vector, xaxis=:log, label = "i")
+    plot!(photo_vector, M_error_vector, xaxis=:log, label = "M")
+    savefig(".\\Results\\accuracy_vs_photos_plot.pdf")
+end
+
