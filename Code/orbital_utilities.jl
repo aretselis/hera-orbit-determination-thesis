@@ -147,7 +147,8 @@ function cartesian_to_orbital_elements(r_vector, v_vector, mu)
         if dot(r_vector, v_vector) < 0
             ni = 360 - ni
         end
-        M = atan((sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))), (e+cosd(ni))/(1+e*cosd(ni))) - (e*(sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))))  
+        M = deg2rad(ni) - 2*e*sind(ni) + ((3*e^2/4)+(e^4/8))*sind(2*ni) - (e^3/3)*sind(3*ni) + (5*e^4/32)*sind(4*ni) 
+        #M = atan((sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))), (e+cosd(ni))/(1+e*cosd(ni))) - (e*(sqrt(1-e^2)*sind(ni)/(1+e*cosd(ni))))  
         M = rad2deg(M)
         return a, e, i, Omega, omega, M
     end
