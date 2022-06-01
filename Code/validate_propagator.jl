@@ -41,26 +41,26 @@ function main()
     # Propagate Dimorphos
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
 
-    vallado_x = CSV.read("x_vector.csv", DataFrame, header=0)
-    vallado_y = CSV.read("y_vector.csv", DataFrame, header=0)
-    vallado_z = CSV.read("z_vector.csv", DataFrame, header=0)
-    vallado_vx = CSV.read("vx_vector.csv", DataFrame, header=0)
-    vallado_vy = CSV.read("vy_vector.csv", DataFrame, header=0)
-    vallado_vz = CSV.read("vz_vector.csv", DataFrame, header=0)
+    vallado_x = CSV.read("C:\\Users\\retse\\repos\\hera-orbit-determination\\Code\\matlab\\x_vector.csv", DataFrame, header=0)
+    vallado_y = CSV.read("C:\\Users\\retse\\repos\\hera-orbit-determination\\Code\\matlab\\y_vector.csv", DataFrame, header=0)
+    vallado_z = CSV.read("C:\\Users\\retse\\repos\\hera-orbit-determination\\Code\\matlab\\z_vector.csv", DataFrame, header=0)
+    vallado_vx = CSV.read("C:\\Users\\retse\\repos\\hera-orbit-determination\\Code\\matlab\\vx_vector.csv", DataFrame, header=0)
+    vallado_vy = CSV.read("C:\\Users\\retse\\repos\\hera-orbit-determination\\Code\\matlab\\vy_vector.csv", DataFrame, header=0)
+    vallado_vz = CSV.read("C:\\Users\\retse\\repos\\hera-orbit-determination\\Code\\matlab\\vz_vector.csv", DataFrame, header=0)
 
     pgfplotsx()
     x_plot = plot(t_vector, x_dimorphos, label = "RK4 Two-Body with J2", xlabel = "Time, t, [seconds]", ylabel = "X, [m]")
-    plot!(x_plot, t_vector, vallado_x, label = "PKEPLER routine")
+    plot!(x_plot, t_vector, vallado_x.Column1, label = "PKEPLER routine")
     y_plot = plot(t_vector, y_dimorphos, label = "RK4 Two-Body with J2", xlabel = "Time, t, [seconds]", ylabel = "Y, [m]")
-    plot!(y_plot, t_vector, vallado_y, label = "PKEPLER routine")
+    plot!(y_plot, t_vector, vallado_y.Column1, label = "PKEPLER routine")
     z_plot = plot(t_vector, z_dimorphos, label = "RK4 Two-Body with J2", xlabel = "Time, t, [seconds]", ylabel = "Z, [m]")
-    plot!(z_plot, t_vector, vallado_z, label = "PKEPLER routine")
+    plot!(z_plot, t_vector, vallado_z.Column1, label = "PKEPLER routine")
     vx_plot = plot(t_vector, vx_dimorphos, label = "RK4 Two-Body with J2", xlabel = "Time, t, [seconds]", ylabel = "Vx, [m/s]")
-    plot!(vx_plot, t_vector, vallado_vx, label = "PKEPLER routine")
+    plot!(vx_plot, t_vector, vallado_vx.Column1, label = "PKEPLER routine")
     vy_plot = plot(t_vector, vy_dimorphos, label = "RK4 Two-Body with J2", xlabel = "Time, t, [seconds]", ylabel = "Vy, [m/s]")
-    plot!(vy_plot, t_vector, vallado_vy, label = "PKEPLER routine")
+    plot!(vy_plot, t_vector, vallado_vy.Column1, label = "PKEPLER routine")
     vz_plot = plot(t_vector, vz_dimorphos, label = "RK4 Two-Body with J2", xlabel = "Time, t, [seconds]", ylabel = "Vz, [m/s]")
-    plot!(vz_plot, t_vector, vallado_vz, label = "PKEPLER routine")
+    plot!(vz_plot, t_vector, vallado_vz.Column1, label = "PKEPLER routine")
     savefig(x_plot, ".\\Results\\validate_x_data.pdf")
     savefig(y_plot, ".\\Results\\validate_y_data.pdf")
     savefig(z_plot, ".\\Results\\validate_z_data.pdf")
@@ -71,12 +71,10 @@ end
 
 # System properties
 G = 6.67430*10^-11
-mass_error = 0.02 # in percentage
-mass_error_distribution = Uniform(-mass_error, mass_error)
-mass_didymos = 5.32*10^11 + rand(mass_error_distribution)*5.32*10^11
+mass_didymos = 5.32*10^11 
 global radius_didymos = 390 # [m]
 global J2_didymos = 0.011432722
-global mass_dimorphos = 4.94*10^9  + rand(mass_error_distribution)*4.94*10^9
+global mass_dimorphos = 4.94*10^9
 global mu_system = G*(mass_didymos+mass_dimorphos)
 global c = 3.0*10^8
 global enable_perturbation = true
@@ -88,7 +86,7 @@ number_of_orbits = 25
 photos_per_orbit = 40
 global total_photos = photos_per_orbit * number_of_orbits
 global start_time = 0.0
-global end_time = 120*hour
+global end_time = 300*hour
 global step_size = floor((end_time-start_time)/total_photos)
 
 main()
