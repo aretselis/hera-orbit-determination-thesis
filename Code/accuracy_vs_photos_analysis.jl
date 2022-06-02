@@ -1,4 +1,4 @@
-using SPICE, ProgressBars, Plots, LinearAlgebra, Distributions, Random,  DifferentialEquations, Metaheuristics, JLD
+using SPICE, ProgressBars, Plots, LinearAlgebra, Distributions, Random,  DifferentialEquations, Metaheuristics, JLD, LaTeXStrings
 include("orbital_utilities.jl")
 include("propagators.jl")
 include("spice_utilities.jl")
@@ -10,12 +10,12 @@ include("plotting.jl")
 
 function main()
     # Dimorphos orbit
-    global a_dimorphos = 1183.593 # Semi-major axis
-    global e_dimorphos = 0.00000098 # Eccentricity
-    global i_dimorphos = 0.035 # Inclination
-    global Omega_dimorphos = 0.0 # Longitude of the ascending node
-    global omega_dimorphos = 0.0 # Argument of periapsis
-    global M_dimorphos = 172.18 # True anomaly 
+    global a_dimorphos = 1194.26 # Semi-major axis
+    global e_dimorphos = 0.0000073 #0.00000098 # Eccentricity
+    global i_dimorphos = 26.39 #0.035 # Inclination
+    global Omega_dimorphos = 152.96 #0.0 # Longitude of the ascending node
+    global omega_dimorphos = 0.0 #0.0 # Argument of periapsis
+    global M_dimorphos = 81.26 #172.18 # True anomaly 
 
     # Determine what kind of orbit we are dealing with
     global dimorphos_orbit_type = type_of_orbit(e_dimorphos, i_dimorphos)
@@ -150,16 +150,18 @@ function main()
     global y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
 
     usable_photos = length(collect(skipmissing(x_pixel_dimorphos)))
-    minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos M_dimorphos])
-    println("Minimum error is " *string(minimum_error)* " pixels")
+    println("Usable photos are " *string(usable_photos)* " photos")
     
     # Perform orbit determination
     if dimorphos_orbit_type == "Normal"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos Omega_dimorphos omega_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Full OD problem, 6 orbital elements
         bounds = [1190.0-30 0.0001 0.0 0.0 0.0 0.0; 
-                  1190.0+30 0.1 90.0 359.99 359.99 359.99]
+                  1190.0+30 0.9 90.0 359.99 359.99 359.99]
         # Minimize square mean error to find best orbital elements
-        result = optimize(residuals, bounds, ECA(options = Options(debug=true, iterations=100)))
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
+        #result = optimize(residuals, bounds, PSO(information = Information(f_optimum = minimum_error),options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -168,16 +170,13 @@ function main()
         omega_final = minimizer(result)[5]
         M_final = minimizer(result)[6]
     elseif dimorphos_orbit_type == "EEO"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos omega_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Elliptical Equatorial orbit, OD with 5 orbital elements
         # Bounds for optimization
-        bounds = [1190.0-30 0.00000001 0.000001 0.0 0.0;
-                  1190.0+30 0.00001 0.0001 359.9 359.99]
-        result = optimize(residuals, bounds, PSO(;
-        N  = 46,
-        C1 = 2.0,
-        C2 = 2.0,
-        ω  = 0.8,
-        information = Information(),options = Options(debug=true, iterations=50)))
+        bounds = [1190.0-30 0.00000001 0.001 0.0 0.0;
+                  1190.0+30 0.9 0.1 359.9 359.99]
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -186,16 +185,13 @@ function main()
         omega_final = minimizer(result)[4]
         M_final = minimizer(result)[5]
     elseif dimorphos_orbit_type == "CIO"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos Omega_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Circular inclined orbit, OD with 5 orbital elements
         # Bounds for optimization
         bounds = [1190.0-30 0.00000001 0.0 0.0 0.0;
                   1190.0+30 0.00001 90.0 359.99 359.99]
-        result = optimize(residuals, bounds, PSO(;
-        N  = 46,
-        C1 = 2.0,
-        C2 = 2.0,
-        ω  = 0.8,
-        information = Information(),options = Options(debug=true, iterations=50)))
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=false, iterations=60, store_convergence = false)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -204,11 +200,13 @@ function main()
         omega_final = omega_dimorphos
         M_final = minimizer(result)[5]
     elseif dimorphos_orbit_type == "CEO"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Circular equatorial orbit, OD with 4 orbital elements
         # Bounds for optimization
-        bounds = [1190.0-30 0.00000001 0.01 0.0;
-                  1190.0+30 0.00001 0.04 359.99]
-        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=50, store_convergence = false)))
+        bounds = [1190.0-30 0.00000001 0.001 0.0;
+                  1190.0+30 0.00001 0.1 359.99]
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -227,11 +225,11 @@ function main()
 end
 
 load_hera_spice_kernels()
-photos_vector = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+photos_vector = [10, 20, 40, 80, 100, 200, 400, 800, 1000]
 
-accuracy_array = zeros(Float64, 10, 6)
+accuracy_array = zeros(Float64, 10, length(photos_vector))
 
-for photo_counter=1:10
+for photo_counter=1:length(photos_vector)
     println("Now running for " * string(photos_vector[photo_counter]) * " photos...")
     # System properties
     G = 6.67430*10^-11
