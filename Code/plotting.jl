@@ -32,12 +32,35 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
     end
 
-    plt_a_vs_time = plot(t_vector, a_vector, label= "a(t) original", xlabel = "Time, t, [seconds]", ylabel = "Semi-major axis, a, [m]")
-    plt_e_vs_time = plot(t_vector, e_vector, label= "e(t)", xlabel = "Time, t, [seconds]", ylabel = "Eccentricity, e, []")
-    plt_i_vs_time = plot(t_vector, i_vector, label= "i(t)", xlabel = "Time, t, [seconds]", ylabel = "Inclination, i, [deg]")
-    plt_Omega_vs_time = plot(t_vector, Omega_vector, label= "Omega(t)", xlabel = "Time, t, [seconds]", ylabel = "Longitude of the ascending node, Omega, [deg]")
-    plt_periapsis_vs_time = plot(t_vector, omega_vector, label= "omega(t)", xlabel = "Time, t, [seconds]", ylabel = "Argument of periapsis, omega, [deg]")
-    plt_M_vs_time = plot(t_vector, M_vector, label= "M(t)", xlabel = "Time, t, [seconds]", ylabel = "Mean anomaly, M, [deg]")
+    if dimorphos_orbit_type == "Normal"
+        plt_a_vs_time = plot(t_vector, a_vector, label= L"a(t)" * " original", xlabel = "Time, " * L"t,\ [s]", ylabel = "Semi-major axis, " * L"a,\ [m]", widen=true, formatter=:plain, legend = :topright)
+        plt_e_vs_time = plot(t_vector, e_vector, label= L"e(t)" * " original", xlabel = "Time, " * L"t,\ [s]", ylabel = "Eccentricity, " * L"e,\ [\ ]", widen=true, formatter=:plain, legend = :topright)
+        plt_i_vs_time = plot(t_vector, i_vector, label= L"i(t)" * " original", xlabel = "Time, " * L"t,\ [s]", ylabel = "Inclination, " * L"i,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_Omega_vs_time = plot(t_vector, Omega_vector, label= L"\Omega(t)" * " original", xlabel = "Time, " * L"t,\ [s]", ylabel = "Longitude of the ascending node, " * L"\Omega,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_periapsis_vs_time = plot(t_vector, omega_vector, label= L"\omega(t)" * " original", xlabel = "Time, " * L"t,\ [s]", ylabel = "Argument of periapsis, " * L"\omega,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_M_vs_time = plot(t_vector, M_vector, label= L"M(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Mean anomaly, " * L"M,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+    elseif dimorphos_orbit_type == "EEO"
+        plt_a_vs_time = plot(t_vector, a_vector, label= L"a(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Semi-major axis, " * L"a,\ [m]", widen=true, formatter=:plain, legend = :topright)
+        plt_e_vs_time = plot(t_vector, e_vector, label= L"e(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Eccentricity, " * L"e,\ [\ ]", widen=true, formatter=:plain, legend = :topright)
+        plt_i_vs_time = plot(t_vector, i_vector, label= L"i(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Inclination, " * L"i,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_Omega_vs_time = plot(t_vector, Omega_vector, label= L"\tilde{\omega}_{true}(t)\ \textnormal{original}", xlabel = "Time, "* L"t,\ [s]", ylabel = L"\textnormal{True longitude of periapsis},\  \tilde{\omega}_{true},\ [deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_periapsis_vs_time = plot(t_vector, omega_vector, label= L"\tilde{\omega}_{true}(t)\ \textnormal{original}", xlabel = "Time, "* L"t,\ [s]", ylabel = L"\textnormal{True longitude of periapsis},\  \tilde{\omega}_{true},\ [deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_M_vs_time = plot(t_vector, M_vector, label= L"M(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = ylabel = "Mean anomaly, " * L"M,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+    elseif dimorphos_orbit_type == "CIO"
+        plt_a_vs_time = plot(t_vector, a_vector, label= L"a(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Semi-major axis, " * L"a,\ [m]", widen=true, formatter=:plain, legend = :topright)
+        plt_e_vs_time = plot(t_vector, e_vector, label= L"e(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Eccentricity, " * L"e,\ [\ ]", widen=true, formatter=:plain, legend = :topright)
+        plt_i_vs_time = plot(t_vector, i_vector, label= L"i(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Inclination, " * L"i,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_Omega_vs_time = plot(t_vector, Omega_vector, label= L"\Omega(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Longitude of the ascending node, " * L"\Omega,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_periapsis_vs_time = plot(t_vector, omega_vector, label= L"u(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Argument of latitude, "* L"u,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_M_vs_time = plot(t_vector, M_vector, label= L"u(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Argument of latitude, "* L"u,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+    elseif dimorphos_orbit_type == "CEO"
+        plt_a_vs_time = plot(t_vector, a_vector, label= L"a(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Semi-major axis, " * L"a,\ [m]", widen=true, formatter=:plain, legend = :topright)
+        plt_e_vs_time = plot(t_vector, e_vector, label= L"e(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Eccentricity, " * L"e,\ [\ ]", widen=true, formatter=:plain, legend = :topright)
+        plt_i_vs_time = plot(t_vector, i_vector, label= L"i(t)" * " original", xlabel = "Time, "* L"t,\ [s]", ylabel = "Inclination, " * L"i,\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_Omega_vs_time = plot(t_vector, Omega_vector, label= L"\lambda_{true}\ \textnormal{original}", xlabel = "Time, "* L"t,\ [s]", ylabel = L"\textnormal{True Longitude},\ \lambda_{true},\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_periapsis_vs_time = plot(t_vector, omega_vector, label=L"\lambda_{true}\ \textnormal{original}", xlabel = "Time, "* L"t,\ [s]", ylabel = L"\textnormal{True Longitude},\ \lambda_{true},\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+        plt_M_vs_time = plot(t_vector, M_vector, label= L"\lambda_{true}(t)\ \textnormal{original}", xlabel = "Time, "* L"t,\ [s]", ylabel = L"\textnormal{True Longitude},\ \lambda_{true},\ [\deg]", widen=true, formatter=:plain, legend = :topright)
+    end
 
     # Extract final guess from optimization
     a_final = OE_fitted[1] 
@@ -72,12 +95,35 @@ function propagate_and_plot_orbital_elements_vs_time(OE_original, OE_fitted)
         a_vector[i], e_vector[i], i_vector[i], Omega_vector[i], omega_vector[i], M_vector[i] =  cartesian_to_orbital_elements([x_dimorphos[i], y_dimorphos[i], z_dimorphos[i]], [vx_dimorphos[i], vy_dimorphos[i], vz_dimorphos[i]], mu_system)
     end
 
-    plot!(plt_a_vs_time, t_vector, a_vector, label= "a(t) Prediction")
-    plot!(plt_e_vs_time, t_vector, e_vector, label= "e(t) Prediction")
-    plot!(plt_i_vs_time, t_vector, i_vector, label= "i(t) Prediction")
-    plot!(plt_Omega_vs_time, t_vector, Omega_vector, label= "Omega(t) Prediction")
-    plot!(plt_periapsis_vs_time, t_vector, omega_vector, label= "omega(t) Prediction")
-    plot!(plt_M_vs_time, t_vector, M_vector, label= "M(t) Prediction")
+    if dimorphos_orbit_type == "Normal"
+        plot!(plt_a_vs_time, t_vector, a_vector, label= L"a(t)" * " prediction")
+        plot!(plt_e_vs_time, t_vector, e_vector, label= L"e(t)" * " prediction")
+        plot!(plt_i_vs_time, t_vector, i_vector, label= L"i(t)" * " prediction")
+        plot!(plt_Omega_vs_time, t_vector, Omega_vector, label= L"\Omega(t)" * " prediction")
+        plot!(plt_periapsis_vs_time, t_vector, omega_vector, label= L"\omega(t)" * " prediction")
+        plot!(plt_M_vs_time, t_vector, M_vector, label= L"M(t)" * " prediction")
+    elseif dimorphos_orbit_type == "EEO"
+        plot!(plt_a_vs_time, t_vector, a_vector, label= L"a(t)" * " prediction")
+        plot!(plt_e_vs_time, t_vector, e_vector, label= L"e(t)" * " prediction")
+        plot!(plt_i_vs_time, t_vector, i_vector, label= L"i(t)" * " prediction")
+        plot!(plt_Omega_vs_time, t_vector, Omega_vector, label= L"\tilde{\omega}_{true}(t)\ \textnormal{prediction}")
+        plot!(plt_periapsis_vs_time, t_vector, omega_vector, label= L"\tilde{\omega}_{true}(t)\ \textnormal{prediction}")
+        plot!(plt_M_vs_time, t_vector, M_vector, label= L"M(t)" * " prediction")
+    elseif dimorphos_orbit_type == "CIO"
+        plot!(plt_a_vs_time, t_vector, a_vector, label= L"a(t)" * " prediction")
+        plot!(plt_e_vs_time, t_vector, e_vector, label= L"e(t)" * " prediction")
+        plot!(plt_i_vs_time, t_vector, i_vector, label= L"i(t)" * " prediction")
+        plot!(plt_Omega_vs_time, t_vector, Omega_vector, label= L"\Omega(t)" * " prediction")
+        plot!(plt_periapsis_vs_time, t_vector, omega_vector, label= L"u(t)" * " prediction")
+        plot!(plt_M_vs_time, t_vector, M_vector, label= L"u(t)" * " prediction")
+    elseif dimorphos_orbit_type == "CEO"
+        plot!(plt_a_vs_time, t_vector, a_vector, label= L"a(t)" * " prediction")
+        plot!(plt_e_vs_time, t_vector, e_vector, label= L"e(t)" * " prediction")
+        plot!(plt_i_vs_time, t_vector, i_vector, label= L"i(t)" * " prediction")
+        plot!(plt_Omega_vs_time, t_vector, Omega_vector, label= L"\lambda_{true}\ \textnormal{prediction}")
+        plot!(plt_periapsis_vs_time, t_vector, omega_vector, label= L"\lambda_{true}(t)\ \textnormal{prediction}")
+        plot!(plt_M_vs_time, t_vector, M_vector, label= L"\lambda_{true}(t)\ \textnormal{prediction}")
+    end
 
     savefig(plt_a_vs_time, ".\\Results\\a_vs_time.pdf")
     savefig(plt_e_vs_time, ".\\Results\\e_vs_time.pdf")
@@ -111,32 +157,32 @@ function propagate_and_plot_xyz(OE_original)
     propagation_steps = 100000
     x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, propagation_steps, enable_perturbation)
 
-    plt_position = plot(t_vector, x_dimorphos, label= "x(t) original", xlabel = "Time, t, [seconds]", ylabel = "[m]")
-    plot!(plt_position, t_vector, y_dimorphos, label= "y(t) original", xlabel = "Time, t, [seconds]", ylabel = "[m]")
-    plot!(plt_position, t_vector, z_dimorphos, label= "z(t) original", xlabel = "Time, t, [seconds]", ylabel = " [m]")
+    plt_position = plot(t_vector, x_dimorphos, label= "x(t) original", xlabel = "Time, "* L"t,\ [s]", ylabel = "[m]")
+    plot!(plt_position, t_vector, y_dimorphos, label= "y(t) original", xlabel = "Time, "* L"t,\ [s]", ylabel = "[m]")
+    plot!(plt_position, t_vector, z_dimorphos, label= "z(t) original", xlabel = "Time, "* L"t,\ [s]", ylabel = " [m]")
     display(plt_position)
 end
 
 
 function plot_accuracy_vs_photo_analysis(photo_vector)
-    # TODO: correctly generate accuracy_array in accuracy_vs_photos_analysis.jl
+    
     accuracy_array =  load("C:\\Users\\retse\\repos\\hera-orbit-determination\\Results\\accuracy_array.jld")["accuracy_array"]
     number_of_runs = size(accuracy_array)[1] - 1
     a_error_vector = zeros(Float64, number_of_runs)
     e_error_vector = zeros(Float64, number_of_runs)
     i_error_vector = zeros(Float64, number_of_runs)
     M_error_vector = zeros(Float64, number_of_runs)
-    for i=1:9
+    for i=1:length(photo_vector)
         a_error_vector[i] = accuracy_array[i, 1]
         e_error_vector[i] = accuracy_array[i, 2]
         i_error_vector[i] = accuracy_array[i, 3]
         M_error_vector[i] = accuracy_array[i, 6]
     end
     pgfplotsx()
-    accuracy_plot = plot(photo_vector, a_error_vector, xaxis=:log, label = "a", xlabel = "Number of photos used", ylabel = "Mean Absolute Performance Error [%]")
-    plot!(photo_vector, e_error_vector, xaxis=:log, label = "e")
-    #plot!(photo_vector, i_error_vector, xaxis=:log, label = "i")
-    plot!(photo_vector, M_error_vector, xaxis=:log, label = "M")
+    accuracy_plot = plot(photo_vector, a_error_vector, xaxis=:log, label = L"a", xlabel = "Number of photos used", ylabel = "Mean Absolute Performance Error [%]", widen=true, formatter=:plain, legend = :topright)
+    plot!(photo_vector, e_error_vector, xaxis=:log, label = L"e")
+    #plot!(photo_vector, i_error_vector, xaxis=:log, label = L"i")
+    plot!(photo_vector, M_error_vector, xaxis=:log, label = L"\lambda_{true}")
     savefig(".\\Results\\accuracy_vs_photos_plot.pdf")
 end
 
