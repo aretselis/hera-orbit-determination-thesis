@@ -179,7 +179,7 @@ function plot_accuracy_vs_photo_analysis(photo_vector)
         M_error_vector[i] = accuracy_array[i, 6]
     end
     pgfplotsx()
-    accuracy_plot = plot(photo_vector, a_error_vector, xaxis=:log, label = L"a", xlabel = "Number of photos used", ylabel = "Mean Absolute Performance Error [%]", widen=true, formatter=:plain, legend = :topright)
+    accuracy_plot = plot(photo_vector, a_error_vector, xaxis=:log, label = L"a", xlabel = "Number of photos used", ylabel = "Mean Absolute Performance Error [%]", widen=true, formatter=:plain, legend = :topright, minorgrid=true)
     plot!(photo_vector, e_error_vector, xaxis=:log, label = L"e")
     #plot!(photo_vector, i_error_vector, xaxis=:log, label = L"i")
     plot!(photo_vector, M_error_vector, xaxis=:log, label = L"\lambda_{true}")
