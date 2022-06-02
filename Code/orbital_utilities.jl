@@ -314,6 +314,14 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         end
     end
 
+    # Remove images which were randomly dropped
+    for i in 1:length(dropped_images_index)
+        x_pixel_didymos[dropped_images_index[i]] = missing
+        y_pixel_didymos[dropped_images_index[i]] = missing
+        x_pixel_dimorphos[dropped_images_index[i]] = missing
+        y_pixel_dimorphos[dropped_images_index[i]] = missing
+    end
+
     return x_pixel_dimorphos, y_pixel_dimorphos
 end
 

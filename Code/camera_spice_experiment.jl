@@ -1,4 +1,4 @@
-using SPICE, ProgressBars, Plots, LinearAlgebra, Distributions, Random,  DifferentialEquations, Metaheuristics
+using SPICE, ProgressBars, Plots, LinearAlgebra, Distributions, Random,  DifferentialEquations, Metaheuristics, LaTeXStrings
 include("orbital_utilities.jl")
 include("propagators.jl")
 include("spice_utilities.jl")
@@ -10,12 +10,12 @@ include("plotting.jl")
 
 function main()
     # Dimorphos orbit
-    global a_dimorphos = 1183.593 # Semi-major axis
-    global e_dimorphos = 0.00000098 # Eccentricity
-    global i_dimorphos = 0.035 # Inclination
-    global Omega_dimorphos = 0.0 # Longitude of the ascending node
-    global omega_dimorphos = 0.0 # Argument of periapsis
-    global M_dimorphos = 172.18 # True anomaly 
+    global a_dimorphos = 1190.63 # Semi-major axis
+    global e_dimorphos = 0.0000062 #0.00000098 # Eccentricity
+    global i_dimorphos = 0.0042 #0.035 # Inclination
+    global Omega_dimorphos = 0.0 #0.0 # Longitude of the ascending node
+    global omega_dimorphos = 0.0 #0.0 # Argument of periapsis
+    global M_dimorphos = 278.96 #172.18 # True anomaly 
 
     # Determine what kind of orbit we are dealing with
     global dimorphos_orbit_type = type_of_orbit(e_dimorphos, i_dimorphos)
@@ -117,7 +117,7 @@ function main()
     end
 
     # Plot 3D image for reference
-    plotlyjs()    
+    pgfplotsx()   
     x_didymos, y_didymos, z_didymos = didymos_coordinates[:, 1], didymos_coordinates[:, 2], didymos_coordinates[:, 3]
     x_dimorphos, y_dimorphos, z_dimorphos = dimorphos_coordinates[:, 1], dimorphos_coordinates[:, 2], dimorphos_coordinates[:, 3]
     plt_3d = scatter3d(x_didymos, y_didymos, z_didymos, color = "blue", xlabel="x [km]", ylabel="y [km]", zlabel = "z [km]", label="Didymos", markersize = 1)
@@ -153,21 +153,31 @@ function main()
         end
     end
 
+    # Drop images which are to be randomly dropped
+    for i in 1:length(dropped_images_index)
+        x_pixel_didymos[dropped_images_index[i]] = missing
+        y_pixel_didymos[dropped_images_index[i]] = missing
+        x_pixel_dimorphos[dropped_images_index[i]] = missing
+        y_pixel_dimorphos[dropped_images_index[i]] = missing
+    end
+
     # Add centroid pixel error
     global x_pixel_dimorphos = x_pixel_dimorphos .+ x_centroid_pixel_error
     global y_pixel_dimorphos = y_pixel_dimorphos .+ y_centroid_pixel_error
 
     usable_photos = length(collect(skipmissing(x_pixel_dimorphos)))
-    minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos M_dimorphos])
-    println("Minimum error is " *string(minimum_error)* " pixels")
+    println("Usable photos: " *string(usable_photos))
     
     # Perform orbit determination
     if dimorphos_orbit_type == "Normal"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos Omega_dimorphos omega_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Full OD problem, 6 orbital elements
         bounds = [1190.0-30 0.0001 0.0 0.0 0.0 0.0; 
-                  1190.0+30 0.1 90.0 359.99 359.99 359.99]
+                  1190.0+30 0.9 90.0 359.99 359.99 359.99]
         # Minimize square mean error to find best orbital elements
-        result = optimize(residuals, bounds, ECA(options = Options(debug=true, iterations=100)))
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
+        #result = optimize(residuals, bounds, PSO(information = Information(f_optimum = minimum_error),options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -176,16 +186,13 @@ function main()
         omega_final = minimizer(result)[5]
         M_final = minimizer(result)[6]
     elseif dimorphos_orbit_type == "EEO"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos omega_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Elliptical Equatorial orbit, OD with 5 orbital elements
         # Bounds for optimization
-        bounds = [1190.0-30 0.00000001 0.000001 0.0 0.0;
-                  1190.0+30 0.00001 0.0001 359.9 359.99]
-        result = optimize(residuals, bounds, PSO(;
-        N  = 46,
-        C1 = 2.0,
-        C2 = 2.0,
-        ω  = 0.8,
-        information = Information(),options = Options(debug=true, iterations=50)))
+        bounds = [1190.0-30 0.00000001 0.001 0.0 0.0;
+                  1190.0+30 0.9 0.1 359.9 359.99]
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -194,16 +201,13 @@ function main()
         omega_final = minimizer(result)[4]
         M_final = minimizer(result)[5]
     elseif dimorphos_orbit_type == "CIO"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos Omega_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Circular inclined orbit, OD with 5 orbital elements
         # Bounds for optimization
         bounds = [1190.0-30 0.00000001 0.0 0.0 0.0;
                   1190.0+30 0.00001 90.0 359.99 359.99]
-        result = optimize(residuals, bounds, PSO(;
-        N  = 46,
-        C1 = 2.0,
-        C2 = 2.0,
-        ω  = 0.8,
-        information = Information(),options = Options(debug=true, iterations=50)))
+        result = optimize(residuals, bounds, ECA(information = Information(f_optimum = minimum_error), options = Options(debug=true, iterations=100, store_convergence = true)))
         # Extract final guess from optimization
         a_final = minimizer(result)[1]
         e_final = minimizer(result)[2]
@@ -212,6 +216,8 @@ function main()
         omega_final = omega_dimorphos
         M_final = minimizer(result)[5]
     elseif dimorphos_orbit_type == "CEO"
+        minimum_error = residuals([a_dimorphos e_dimorphos i_dimorphos M_dimorphos])
+        println("Minimum error is " *string(minimum_error)* " pixels")
         # Circular equatorial orbit, OD with 4 orbital elements
         # Bounds for optimization
         bounds = [1190.0-30 0.00000001 0.001 0.0;
@@ -225,6 +231,11 @@ function main()
         omega_final = omega_dimorphos
         M_final = minimizer(result)[4]
     end
+
+    # Plot performance
+    f_calls, best_f_values = convergence(result)
+    plt_performance = plot(1:length(f_calls), best_f_values, xlabel="Generation", ylabel="Residuals function value, [pixels]", label="ECA", yaxis=:log, widen=true, formatter=:plain, legend = :topright)
+    savefig(plt_performance, ".\\Results\\performance_plot.pdf")
     
     # Save orbital elements plots vs time
     original_orbital_elements = [a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos]
@@ -259,11 +270,6 @@ function main()
     scatter!(x_pixel_dimorphos, y_pixel_dimorphos, label = "Dimorphos")
     #scatter!(x_pixel_fit_dimorphos, y_pixel_fit_dimorphos, label = "Dimorphos best fit")
     scatter!(x_pixel_boundaries, y_pixel_boundaries, label= "Pixel boundaries")
-
-    # Plot performance
-    f_calls, best_f_values = convergence(result)
-    plt_performance = plot(1:length(f_calls), best_f_values, xlabel="Generation", ylabel="Residuals_value", label="ECA", yaxis=:log)
-
     display(plt_performance)
 end
 
@@ -294,18 +300,29 @@ global spice_start_time = utc2et("2027-02-28T08:14:58")
 global flux = 1358
 
 # Errors definition
+# Centroid pixel error
 pixel_error = 4
 pixel_error_distribution = Uniform(-pixel_error, pixel_error)
 global x_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
 global y_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
+# Barycenter position error
 global error_barycenter = 10/1000 # [km]
 global barycenter_error_distribution = Normal(0.0, error_barycenter)
+# HERA position error
 global error_hera_position = 10/1000 # [km]
 global hera_error_distribution = Normal(0.0, error_hera_position)
+# HERA pointing error
 global pointing_error = deg2rad(1)
 global pointing_error_distribution = Normal(0.0, pointing_error)
 global random_error = rand(pointing_error_distribution, total_photos)
 global random_axis = rand(1:2, total_photos)
+# Randomly dropped images
+number_of_dropped_images = Int64(round(0.1*total_photos))
+dropped_image_distribution = Uniform(0, total_photos)
+global dropped_images_index = zeros(Int64, number_of_dropped_images) 
+for p=1:number_of_dropped_images
+    dropped_images_index[p] = Int64(round(rand(dropped_image_distribution)))
+end
 
 main()
 
