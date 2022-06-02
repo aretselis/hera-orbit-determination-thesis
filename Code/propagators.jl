@@ -13,7 +13,7 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
     t_span = (t_start, t_end)
 
     prob = ODEProblem(two_body_perturbed!,rv_initial,t_span)
-    integrator = init(prob, Tsit5(), dt=10, adaptive=false)
+    integrator = init(prob, Tsit5(), dt=60, adaptive=false)
     sol = solve!(integrator)
     x_vector = sol[1, :]
     y_vector = sol[2, :]
