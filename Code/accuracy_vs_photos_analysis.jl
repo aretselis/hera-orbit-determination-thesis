@@ -256,18 +256,29 @@ for photo_counter=1:length(photos_vector)
     global flux = 1358
 
     # Errors definition
+    # Centroid pixel error
     pixel_error = 4
     pixel_error_distribution = Uniform(-pixel_error, pixel_error)
     global x_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
     global y_centroid_pixel_error = Int64(round(rand(pixel_error_distribution)))
+    # Barycenter position error
     global error_barycenter = 10/1000 # [km]
     global barycenter_error_distribution = Normal(0.0, error_barycenter)
+    # HERA position error
     global error_hera_position = 10/1000 # [km]
     global hera_error_distribution = Normal(0.0, error_hera_position)
+    # HERA pointing error
     global pointing_error = deg2rad(1)
     global pointing_error_distribution = Normal(0.0, pointing_error)
     global random_error = rand(pointing_error_distribution, total_photos)
     global random_axis = rand(1:2, total_photos)
+    # Randomly dropped images
+    number_of_dropped_images = Int64(round(0.1*total_photos))
+    dropped_image_distribution = Uniform(0, total_photos)
+    global dropped_images_index = zeros(Int64, number_of_dropped_images) 
+    for p=1:number_of_dropped_images
+        dropped_images_index[p] = Int64(round(rand(dropped_image_distribution)))
+    end
     current_run_result = main()
     for j=1:6
         accuracy_array[photo_counter, j] = current_run_result[j]
