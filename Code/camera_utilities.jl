@@ -46,7 +46,7 @@ function convert_to_pixels(x_data, y_data, x_boundaries, y_boundaries)
     y_pixel_range = LinRange(y_bottom_left, y_top_left, image_size)
 
     # Initialize array 
-    x_pixel = Array{Union{Missing, Float64,}, 1}(missing, length(x_data))
+    x_pixel = Array{Union{Missing, Float64}, 1}(missing, length(x_data))
     y_pixel = Array{Union{Missing, Float64}, 1}(missing, length(x_data))
 
     for i=1:length(x_data)
