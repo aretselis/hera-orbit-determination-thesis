@@ -4,9 +4,15 @@ function runge_kutta_4(x_0, y_0, z_0, vx_0, vy_0, vz_0, mu, t_start, t_end, step
         du[1] = v_x
         du[2] = v_y
         du[3] = v_z
-        du[4] = -mu*x/(sqrt(x^2 + y^2 + z^2)^3) - ((3*J2_didymos*mu*(radius_didymos^2)*x)/(2*(sqrt(x^2 + y^2 + z^2)^5)) * (1 - ((5*z^2)/(sqrt(x^2 + y^2 + z^2)^2))))
-        du[5] = -mu*y/(sqrt(x^2 + y^2 + z^2)^3) - ((3*J2_didymos*mu*(radius_didymos^2)*y)/(2*(sqrt(x^2 + y^2 + z^2)^5)) * (1 - ((5*z^2)/(sqrt(x^2 + y^2 + z^2)^2))))
-        du[6] = -mu*z/(sqrt(x^2 + y^2 + z^2)^3) - ((3*J2_didymos*mu*(radius_didymos^2)*z)/(2*(sqrt(x^2 + y^2 + z^2)^5)) * (3 - ((5*z^2)/(sqrt(x^2 + y^2 + z^2)^2))))
+        if perturbation == true
+            du[4] = -mu*x/(sqrt(x^2 + y^2 + z^2)^3) - ((3*J2_didymos*mu*(radius_didymos^2)*x)/(2*(sqrt(x^2 + y^2 + z^2)^5)) * (1 - ((5*z^2)/(sqrt(x^2 + y^2 + z^2)^2))))
+            du[5] = -mu*y/(sqrt(x^2 + y^2 + z^2)^3) - ((3*J2_didymos*mu*(radius_didymos^2)*y)/(2*(sqrt(x^2 + y^2 + z^2)^5)) * (1 - ((5*z^2)/(sqrt(x^2 + y^2 + z^2)^2))))
+            du[6] = -mu*z/(sqrt(x^2 + y^2 + z^2)^3) - ((3*J2_didymos*mu*(radius_didymos^2)*z)/(2*(sqrt(x^2 + y^2 + z^2)^5)) * (3 - ((5*z^2)/(sqrt(x^2 + y^2 + z^2)^2))))
+        else
+            du[4] = -mu*x/(sqrt(x^2 + y^2 + z^2)^3)
+            du[5] = -mu*y/(sqrt(x^2 + y^2 + z^2)^3)
+            du[6] = -mu*z/(sqrt(x^2 + y^2 + z^2)^3)
+        end
     end
 
     rv_initial = [x_0, y_0, z_0, vx_0, vy_0, vz_0]
