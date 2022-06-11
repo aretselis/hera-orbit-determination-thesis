@@ -52,6 +52,7 @@ These problems remain applicable to the Didymos-Dimorphos asteroid system. Based
 The safety margin ensures that no collision can occur during an arc due to the presence of uncertainties in the gravity field model and is assigned a value of $C=0.4$ for Hera proximity operations \cite{hera-autonomous-ops}.
 
 \subsection{SPICE and SPICE.jl}
+\label{sec:spice}
 
 Given all of this information, hyperbolic arcs can be defined at will. However, to ensure consistency with the actual implementation of Hera's orbit, the hyperbolic arcs of Hera will be extracted from SPICE. SPICE provides a portable, multi-discipline mechanism useful in both planning space science observations and defining the position of objects with respect to pre-defined reference frames \cite{SPICE}. SPICE is comprised of different logical elements which also form the acronym SPICE (Spacecraft, Planet, Instrument, Camera matrix and Events) and correspond to different SPICE data products which can then be used by end users for different applications\cite{SPICE}. An overview of the SPICE architecture can be found in \Cref{fig:spice_components}. Most notably, we are interested in the following SPICE kernels:
 
@@ -81,12 +82,152 @@ As previously discussed in \Cref{chap:introduction}, the dynamical characterizat
 	\label{fig:hera_extended_orbit}
 \end{figure}
 
-For the context of this thesis, a narrower time interval has been chosen. The observation time used has been set to \si{120 \hour}, which is approximately equivalent to 10 orbits of Dimorphos around Didymos. This observation period is equal to \num{5} days, providing a reasonable time frame for the acquisition of pictures. At the worst case scenario, assuming that Hera has to acquire \num{500} photos of the two asteroids, approximately \num{4} photos per hour have to be taken, providing enough time per hour for other operations including orbital maintenance. The corresponding orbit of Hera for the selected time interval during the Early Characterization Phase with respect to the system's barycenter can be seen in \Cref{fig:hera_thesis_orbit}
-
+For the context of this thesis, a time interval corresponding to 5 hyperbolic arcs has been chosen. The observation time used has been set to achieve this is set to \si{300 \hour}, which is approximately equivalent to 25 orbits of Dimorphos around Didymos. This observation period is equal to \num{12.5} days, providing a reasonable time frame for the acquisition of pictures. At the worst case scenario, assuming that Hera has to acquire \num{1000} photos of the two asteroids, approximately \num{4} photos per hour have to be taken, providing enough time per hour for other operations including orbital maintenance. One also has to note that due to high pointing errors especially towards the end of a hyperbolic arc \cite{hera-adcs}, pointing errors would fluctuate even more for longer observation periods. 
 
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=\textwidth]{Figures/Chapter2/ECP_thesis_orbit_plot.pdf}
-	\caption{The hyperbolic arcs which Hera orbits on during the \si{120\hour} observation period chosen for this thesis.}
+	\caption{The hyperbolic arcs which Hera orbits on during the \si{300\hour} observation period chosen for this thesis.}
 	\label{fig:hera_thesis_orbit}
 \end{figure}
+
+Finally, the observation period selected includes four transitions between hyperbolic arcs, which correspond to the worst observational conditions, where the pointing error gets maximized \cite{hera-adcs}. The corresponding orbit of Hera for the selected time interval during the Early Characterization Phase with respect to the system's barycenter can be seen in \Cref{fig:hera_thesis_orbit}. 
+
+\subsection{Didymos-Dimorphos dynamics}
+
+In \Cref{sec:spice}, the orbits of all bodies were extracted with respect to the barycenter of the Didymos-Dimorphos system. While the orbit of the Hera spacecraft will be extracted and used directly from SPICE, the orbits of the two asteroids will be extracted from a self-developed Runge-Kutta 4 integrator. This will enable testing of several types of orbits and orbital parameters, which are not limited by the one reference case included in the data provided by the ESA SPICE Service. The properties of the system and the integrator will be discussed now. 
+
+Since Hera's orbit is predefined from SPICE and does not have to be calculated, the two body problem can be used for the two asteroids. The gravitational force between two bodies is given by:
+
+\begin{equation}
+	\overrightarrow{F_{i}}=G \frac{m_{i} m_{j}}{r_{i j}^{3}} \overrightarrow{r_{i j}}
+\end{equation}
+
+While the equation of motion for each body is given by:
+
+\begin{equation}
+	\ddot{\overrightarrow{R}_{i}}=G \frac{m_{j}}{r_{i j}^{3}} \overrightarrow{r_{i j}}
+\end{equation}
+
+The equation of relative motion will thus be given by:
+
+\begin{equation}
+	\ddot{\overrightarrow{r}} = -G\left(m_{1}+m_{2}\right) \frac{\overrightarrow{r}}{r^{3}}
+\end{equation}
+
+Being a small asteroid body, Didymos does not have atmosphere which can cause a perturbation to the motion of Dimorphos due to atmospheric drag. However, the non-spherical shape of the asteroid will cause a perturbation in the gravitational potential. While one of the main goals of the DART mission is to obtain a better understanding of the gravity environment of the binary asteroid system \cite{dart-requirements}, only perturbations caused by $J_2$ will be considered in this thesis. This perturbation will cause the variation of orbital elements throughout the period of the orbit and will allow us to model complex situations by working with osculating elements. Considering the effect of $J_{2}$, the equation of relative motion which we will use will be:
+
+\begin{equation}
+	\ddot{\overrightarrow{r}} = -G\left(m_{Didymos}+m_{Dimorphos}\right) \frac{\overrightarrow{r}}{r^{3}} + \overrightarrow{a_{J_2}}
+\end{equation}
+
+The acceleration caused by $J_{2}$ can be written in cartesian form as \cite{vallado}:
+
+\begin{equation}
+	a_{i}=-\frac{3 J_{2} \mu R_{didymos}^{2} r_{i}}{2 r^{5}}\left(1-\frac{5 r_{k}^{2}}{r^{2}}\right)
+\end{equation}
+
+\begin{equation}
+	a_{j}=-\frac{3 J_{2} \mu R_{didymos}^{2} r_{j}}{2 r^{5}}\left(1-\frac{5 r_{k}^{2}}{r^{2}}\right)
+\end{equation}
+
+\begin{equation}
+	a_{k}=-\frac{3 J_{2} \mu R_{didymos}^{2} r_{k}}{2 r^{5}}\left(3-\frac{5 r_{k}^{2}}{r^{2}}\right)
+\end{equation}
+
+where $\mu= G\left(M_{didymos} + M_{dimorphos} \right)$ and $i,\ j$ and $k$ correspond to $x,\ y$ and $z$ coordinates. The final form of the equations of motion for each cartesian coordinate to be integrated are:
+
+\begin{equation}
+	\label{eq:motionx}
+	\ddot{x} = -\frac{\mu x}{r^{3}} -\frac{3 J_{2} \mu R_{didymos}^{2} r_{i}}{2 r^{5}}\left(1-\frac{5 r_{k}^{2}}{r^{2}}\right)
+\end{equation}
+
+\begin{equation}
+	\label{eq:motiony}
+	\ddot{y} = -\frac{\mu y}{r^{3}} -\frac{3 J_{2} \mu R_{didymos}^{2} r_{j}}{2 r^{5}}\left(1-\frac{5 r_{k}^{2}}{r^{2}}\right)
+\end{equation}
+
+\begin{equation}
+	\label{eq:motionz}
+	\ddot{z} = -\frac{\mu z}{r^{3}} -\frac{3 J_{2} \mu R_{didymos}^{2} r_{k}}{2 r^{5}}\left(3-\frac{5 r_{k}^{2}}{r^{2}}\right)
+\end{equation}
+
+\Cref{eq:motionx,eq:motiony,eq:motionz} form a system of differential equations which have to be integrated. To integrate the system, a Runge-Kutta method will be used, which achieves the accuracy of a Taylor series approach without requiring the calculation of higher derivatives \cite{chapra}. A fourth order Runge-Kutta method will be used here (RK4), where the solution is given by the iterative form of:
+
+\begin{equation}
+	y_{i+1}=y{i}+\frac{1}{6}\left( k_{1} + 2k_{2} + 2k_{3} + k_{4}\right)
+\end{equation}
+
+The $k$ constants are computed using:
+
+\begin{equation}
+\label{eq:rk4-constants}
+\begin{aligned}
+		k_{1} &= f(x_{i},y_{i})\\
+		k_{2} &= f(x_{i}+\frac{h}{2},y_{i}+\frac{k_{1}h}{2})\\
+		k_{3} &= f\left( x_{i}+\frac{h}{2},y_{i}+\frac{k_{2}h}{2} \right)\\
+		k_{4} &= f(x_{i}+h,y_{i}+k_{3}h)
+\end{aligned}
+\end{equation}
+
+In \Cref{eq:rk4-constants}, $h$ refers to the step size used for the integration, which in this case is the time step used. We will use a time step of $dt=60$ \si{\second}. To ensure that the integrator works properly, it has been validated against the PKEPLER routine \cite{vallado}. The validation procedure has showed that the cartesian positions and velocities obtained using the RK4 integrator used here fully coincides with the cartesian positions and velocities obtained using the PKEPLER routine. The full validation procedure and the results obtained can be found in \Cref{appendix:rk4-validation}.
+
+\subsection{Didymos $J_{2}$}
+
+To compute the $J_{2}$ constant of Didymos, the moments of inertia of the asteroid are used. Let's derive the $J_{2}$ constant now. The expressions of inertial integrals for a rigid body will be used \cite{scheeres}, which provide a relationship for the moment of inertia and the zonal gravitational coefficients, namely:
+
+\begin{equation}
+	\label{eq:inertia-first}
+	I_{xx} - I_{yy} = -4Mr_{o}^{2}C_{22}
+\end{equation}
+
+and:
+
+\begin{equation}
+	\label{eq:inertia-second}
+	I_{yy} - I_{zz} = Mr_{o}^{2} (C_{20} + 2C_{22})
+\end{equation}
+
+Combining \cref{eq:inertia-first} and \cref{eq:inertia-second} yields:
+
+\begin{equation}
+	\label{eq:inertia-c20}
+	-C_{20} = \frac{2I_{zz}-I_{yy}-I_{xx}}{2Mr_{o}^{2}}
+\end{equation}
+
+taking into consideration the fact that $J_{2}=-C_{20}$, the final expression for $J_{2}$ is obtained to be:
+
+\begin{equation}
+	\label{eq:inertia-j2}
+	J_{2} = \frac{2I_{zz}-I_{yy}-I_{xx}}{2Mr_{o}^{2}}
+\end{equation}
+
+Let's assume Didymos to be a triaxial ellipsoid and obtain a mean radius for the body. Assuming $a=0.416194$ \si{\kilo\meter} and $b=0.418765$ \si{\kilo\meter}, a radius value is obtained to be:
+
+\begin{equation}
+	R=\frac{a+b}{2}=0.4174795\ km
+\end{equation}
+
+For Didymos, a mass of $M_{Didymos}=5.32\times10^{11}$ \si{\kilogram} will be used. The moments of inertia are computed to be such that there is an alignment of results with the results computed by the General Use Binary Asteroid Simulator (GUBAS) \cite{gubas}, and are presented in \Cref{tab:inertia-didymos}. Combining all of these values together in \Cref{eq:inertia-j2}, a final value of $J_{2}$ is obtained to be:
+
+\begin{equation}
+	\label{eq:final-j2}
+	J_{2} = 0.012503167534491537
+\end{equation}
+
+this value will be used in the RK4 propagator to introduce the perturbation in all instances from now on.
+
+\begin{table}[h]
+	\centering
+	\caption{Moments of Inertia for Didymos}
+	\begin{tabular}{c c}
+		\toprule
+		\textbf{Moments of Inertia} & \textbf{Value [\si{\kilogram \kilo\meter\squared}]} \\
+		\midrule
+		\textbf{$I_{xx}$}        & 31436.196699045453 \\
+		\textbf{$I_{yy}$}       & 32009.61802392827   \\      
+		\textbf{$I_{zz}$}       & 32882.223794965415  \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:inertia-didymos}
+\end{table}
