@@ -273,7 +273,7 @@ for photo_counter=1:length(photos_vector)
     global random_error = rand(pointing_error_distribution, total_photos)
     global random_axis = rand(1:2, total_photos)
     # Randomly dropped images
-    number_of_dropped_images = Int64(round(0.1*total_photos))
+    number_of_dropped_images = Int64(round(0.04*total_photos))
     dropped_image_distribution = Uniform(0, total_photos)
     global dropped_images_index = zeros(Int64, number_of_dropped_images) 
     for p=1:number_of_dropped_images
