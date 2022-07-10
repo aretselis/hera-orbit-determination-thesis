@@ -221,9 +221,9 @@ function geometrical_shadow_check(x_dimorphos, y_dimorphos, z_dimorphos, x_sun, 
 end
 
 
-function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time)
+function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time, mu)
     # Compute initial position and velocity vector from orbital elements
-    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
+    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu)
     x = r_vector[1]
     y = r_vector[2]
     z = r_vector[3]
@@ -232,7 +232,7 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu, start_time, end_time, total_photos, enable_perturbation)
     # Select every xth element to match the photos taken
     photo_selector = LinRange(1, length(x_dimorphos), total_photos)
     index_vector = zeros(Int64, total_photos)
@@ -301,34 +301,25 @@ function propagate_and_compute_dimorphos_pixel_points(a_dimorphos, e_dimorphos, 
         iteration += 1
     end
 
-    x_pixel_didymos, y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
-    x_pixel_dimorphos, y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
+    local_x_pixel_didymos, local_y_pixel_didymos = convert_to_pixels(didymos_pixel_coordinates[:, 1], didymos_pixel_coordinates[:, 2], x_boundaries, y_boundaries)
+    local_x_pixel_dimorphos, local_y_pixel_dimorphos = convert_to_pixels(dimorphos_pixel_coordinates[:, 1], dimorphos_pixel_coordinates[:, 2],x_boundaries, y_boundaries)
 
     # Reject images where we cannot see one object 
-    for i in 1:length(x_pixel_didymos)
-        if ismissing(x_pixel_didymos[i]) || ismissing(x_pixel_dimorphos[i])
-            x_pixel_didymos[i] = missing
-            y_pixel_didymos[i] = missing
-            x_pixel_dimorphos[i] = missing
-            y_pixel_dimorphos[i] = missing
+    for i in 1:length(local_x_pixel_didymos)
+        if ismissing(local_x_pixel_didymos[i]) || ismissing(local_x_pixel_dimorphos[i])
+            local_x_pixel_didymos[i] = missing
+            local_y_pixel_didymos[i] = missing
+            local_x_pixel_dimorphos[i] = missing
+            local_y_pixel_dimorphos[i] = missing
         end
     end
-
-    # Remove images which were randomly dropped
-    for i in 1:length(dropped_images_index)
-        x_pixel_didymos[dropped_images_index[i]] = missing
-        y_pixel_didymos[dropped_images_index[i]] = missing
-        x_pixel_dimorphos[dropped_images_index[i]] = missing
-        y_pixel_dimorphos[dropped_images_index[i]] = missing
-    end
-
-    return x_pixel_dimorphos, y_pixel_dimorphos
+    return local_x_pixel_dimorphos, local_y_pixel_dimorphos
 end
 
 
-function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time)
+function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, start_time, end_time, step_size, spice_start_time, mu)
     # Compute initial position and velocity vector from orbital elements
-    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu_system)
+    r_vector, v_vector = orbital_elements_to_cartesian(a_dimorphos, e_dimorphos, i_dimorphos, Omega_dimorphos, omega_dimorphos, M_dimorphos, mu)
     x = r_vector[1]
     y = r_vector[2]
     z = r_vector[3]
@@ -337,7 +328,7 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu, start_time, end_time, total_photos, enable_perturbation)
     # Select every xth element to match the photos taken
     photo_selector = LinRange(1, length(x_dimorphos), total_photos)
     index_vector = zeros(Int64, total_photos)
@@ -381,7 +372,7 @@ function propagate_and_compute_dimorphos_3D_points(a_dimorphos, e_dimorphos, i_d
         position_dimorphos = dimorphos_coordinates[iteration, :]
         # Get didymos reference position or translate hera_coordinates
         for j in 1:3
-            barycenter_offset[j] = rand(barycenter_error_distribution) + rand(hera_error_distribution)
+            barycenter_offset[j] = 0.0
         end
         # Apply offset to all coordinates
         for j in 1:3
