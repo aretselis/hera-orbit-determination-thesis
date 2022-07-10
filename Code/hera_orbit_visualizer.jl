@@ -28,6 +28,7 @@ function load_hera_spice_kernels()
     furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_sc_DCP3_v01.bsp")
     furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\HERA_sc_ECP_v01.bsp")
     furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\spk\\didymos_hor_000101_500101_v01.bsp")
+    furnsh("C:\\Users\\retse\\repos\\hera-data\\kernels\\fk\\hera_v07.tf")
     furnsh(planets_kernel)
     furnsh(didymos_kernel)
     furnsh(dimorphos_kernel)
@@ -49,11 +50,11 @@ function main()
     et_minute = et_end-et_start
 
     # Orbit start and end time
-    start_time = utc2et("2027-02-25T08:14:58")
+    start_time = utc2et("2027-01-28T08:15:58")
     #start_time = utc2et("2027-01-29T08:14:59")
-    #end_time = utc2et("2027-03-21T08:14:58")
-    end_time = start_time + 120*60*60
-    step_size = et_minute
+    end_time = utc2et("2027-03-25T08:13:58")
+    end_time = start_time + 15*24*60*60
+    step_size = 10*et_minute
     steps = convert(Int64, ceil((end_time-start_time)/step_size))
 
     # Initialize position arrays (x, y, z)
@@ -83,11 +84,11 @@ function main()
     
     # Plot Hera Static img
     pgfplotsx()
-    hera_plot = plot3d(x_hera,y_hera,z_hera, xlabel="x [km]", ylabel="y [km]", zlabel="z [km]", label="Hera", aspect_ratio=:1)
-    plot3d!(hera_plot, x_didymos,y_didymos,z_didymos, label="Didymos", aspect_ratio=:1)
-    plot3d!(hera_plot, x_dimorphos, y_dimorphos, z_dimorphos, label="Dimorphos", aspect_ratio=:1)
-    #display(hera_plot)
-    savefig(".\\Results\\ECP_thesis_orbit_plot.pdf")
+    hera_plot = plot3d(x_hera,y_hera,z_hera, xlabel="x [km]", ylabel="y [km]", zlabel="z [km]", label="Hera", widen=true, formatter=:plain, legend = :topright)
+    scatter3d!(hera_plot, x_didymos,y_didymos,z_didymos, label="Didymos")
+    plot3d!(hera_plot, x_dimorphos, y_dimorphos, z_dimorphos, label="Dimorphos")
+    display(hera_plot)
+    savefig(".\\Results\\ECP_extended_reference_plot.pdf")
     #=
     # Save image as .gif figure (warning, might take a lot of time)
     plt = scatter3d(1, title="Hera Trajectory", xaxis=("x",(-20,20)), yaxis=("y",(-20,20)), zaxis=("z",(-25,5)), markersize=1)
