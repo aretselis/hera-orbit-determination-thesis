@@ -90,9 +90,10 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     Omega_final = predicted_elements[4]
     omega_final = predicted_elements[5]
     M_final = predicted_elements[6]
+    mu_fitted = predicted_elements[7]
 
     # Compute initial position and velocity vector from orbital elements
-    r_vector, v_vector = orbital_elements_to_cartesian(a_final, e_final, i_final, Omega_final, omega_final,M_final, mu_system)
+    r_vector, v_vector = orbital_elements_to_cartesian(a_final, e_final, i_final, Omega_final, omega_final, M_final, mu_fitted)
     x = r_vector[1]
     y = r_vector[2]
     z = r_vector[3]
@@ -101,7 +102,7 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     vz = v_vector[3]
 
     # Propagate Dimorphos
-    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_system, start_time, end_time, total_photos, enable_perturbation)
+    x_dimorphos, y_dimorphos, z_dimorphos, vx_dimorphos, vy_dimorphos, vz_dimorphos, t_vector = runge_kutta_4(x, y, z, vx, vy, vz, mu_fitted, start_time, end_time, total_photos, enable_perturbation)
     # Select every xth element to match the photos taken
     photo_selector = LinRange(1, length(x_dimorphos), total_photos)
     index_vector = zeros(Int64, total_photos)
@@ -133,7 +134,7 @@ function compute_mean_absolute_percentage_error(actual_elements, predicted_eleme
     end
 
     predicted_values = [a_vector e_vector i_vector Omega_vector omega_vector M_vector]
-
+    vector_size = length(a_vector)
     percentage_errors = zeros(Float64, 6)
     for i in 1:6
         sum = 0.0
